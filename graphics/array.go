@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/faiface/mainthread"
-	"github.com/go-gl/gl/v3.3-core/gl"
+	gl "github.com/askeladdk/pancake/graphics/opengl"
 )
 
 var vaobinder = newBinder(func(ref uint32) {
-	gl.BindVertexArray(ref)
+	gl.BindVertexArray(gl.VertexArray(ref))
 })
 
-func vaoAttribs(buf *buffer, format AttrFormat, atridx, divisor uint32) uint32 {
+func vaoAttribs(buf *buffer, format AttrFormat, attrib gl.Attrib, divisor int) gl.Attrib {
 	buf.Begin()
 	defer buf.End()
 
@@ -21,27 +20,27 @@ func vaoAttribs(buf *buffer, format AttrFormat, atridx, divisor uint32) uint32 {
 	offset := 0
 
 	for _, attr := range format {
-		for i := int32(0); i < attr.repeat(); i++ {
+		for i := 0; i < attr.repeat(); i++ {
 			gl.VertexAttribPointer(
-				atridx, attr.components(), gl.FLOAT, false, stride, gl.PtrOffset(offset))
-			gl.VertexAttribDivisor(atridx, divisor)
-			gl.EnableVertexAttribArray(atridx)
-			offset += int(attr.stride())
-			atridx += 1
+				attrib, attr.components(), gl.FLOAT, false, stride, offset)
+			gl.VertexAttribDivisor(attrib, divisor)
+			gl.EnableVertexAttribArray(attrib)
+			offset += attr.stride()
+			attrib += 1
 		}
 	}
 
-	return atridx
+	return attrib
 }
 
 type vao struct {
 	format AttrFormat
 	shared *buffer
-	ref    uint32
+	ref    gl.VertexArray
 }
 
 func (this *vao) Begin() {
-	vaobinder.bind(this.ref)
+	vaobinder.bind(uint32(this.ref))
 }
 
 func (this *vao) End() {
@@ -70,43 +69,41 @@ func (this *vao) Slice(i, j int) VertexSlice {
 	if j > i && i >= 0 && j <= this.Len() {
 		return &vertexSlice{
 			vao: this,
-			i:   int32(i),
-			j:   int32(j),
+			i:   i,
+			j:   j,
 		}
 	} else {
 		panic(fmt.Errorf("invalid range"))
 	}
 }
 
-func (this *vao) draw(i, j int32) {
-	if j > i && i >= 0 && j <= int32(this.Len()) {
-		gl.DrawArrays(gl.TRIANGLES, int32(i), int32(j-i))
+func (this *vao) draw(i, j int) {
+	if j > i && i >= 0 && j <= this.Len() {
+		gl.DrawArrays(gl.TRIANGLES, i, j-i)
 	} else {
 		panic(errors.New("range out of bounds"))
 	}
 }
 
 func (this *vao) Draw() {
-	this.draw(0, int32(this.Len()))
+	this.draw(0, this.Len())
 }
 
 func (this *vao) delete() {
-	mainthread.CallNonBlock(func() {
-		gl.DeleteVertexArrays(1, &this.ref)
-	})
+	gl.DeleteVertexArray(this.ref)
 }
 
-func newVao(format AttrFormat, len int, data interface{}) (*vao, error) {
+func NewVertexSlice(format AttrFormat, len int, data interface{}) (*vao, error) {
 	if format == nil || len <= 0 {
 		return nil, errors.New("invalid arguments")
-	} else if shared, err := newBuffer(uint32(format.stride()), uint32(len), data); err != nil {
+	} else if shared, err := NewBuffer(format.stride(), len, data); err != nil {
 		return nil, err
 	} else {
 		v := &vao{
+			ref:    gl.CreateVertexArray(),
 			format: format,
-			shared: shared,
+			shared: shared.(*buffer),
 		}
-		gl.GenVertexArrays(1, &v.ref)
 		runtime.SetFinalizer(v, (*vao).delete)
 
 		v.Begin()
@@ -118,7 +115,7 @@ func newVao(format AttrFormat, len int, data interface{}) (*vao, error) {
 
 type vertexSlice struct {
 	vao  *vao
-	i, j int32
+	i, j int
 }
 
 func (this *vertexSlice) Begin() {

@@ -5,22 +5,21 @@ import (
 	"image"
 	"runtime"
 
-	"github.com/faiface/mainthread"
-	"github.com/go-gl/gl/v3.3-core/gl"
+	gl "github.com/askeladdk/pancake/graphics/opengl"
 )
 
 var fboBinder = newBinder(func(ref uint32) {
-	gl.BindFramebuffer(gl.FRAMEBUFFER, ref)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, gl.Framebuffer(ref))
 })
 
 type frame struct {
 	color *texture
 	depth *texture
-	ref   uint32
+	ref   gl.Framebuffer
 }
 
 func (this *frame) Begin() {
-	fboBinder.bind(this.ref)
+	fboBinder.bind(uint32(this.ref))
 }
 
 func (this *frame) End() {
@@ -34,27 +33,26 @@ func (this *frame) Texture() Texture {
 func (this *frame) Blit(dst Frame, dr, sr image.Rectangle, filter Filter) {
 	gl.BlitNamedFramebuffer(
 		this.ref, dst.(*frame).ref,
-		int32(sr.Min.X), int32(sr.Min.Y), int32(sr.Max.X), int32(sr.Max.Y),
-		int32(dr.Min.X), int32(dr.Min.Y), int32(dr.Max.X), int32(dr.Max.Y),
-		gl.COLOR_BUFFER_BIT, uint32(filter.maxparam()),
+		sr.Min.X, sr.Min.Y, sr.Max.X, sr.Max.Y,
+		dr.Min.X, dr.Min.Y, dr.Max.X, dr.Max.Y,
+		gl.COLOR_BUFFER_BIT, filter.maxparam(),
 	)
 	panicError()
 }
 
 func (this *frame) delete() {
-	mainthread.CallNonBlock(func() {
-		gl.DeleteFramebuffers(1, &this.ref)
-	})
+	gl.DeleteFramebuffer(this.ref)
 }
 
-func newFrame(size image.Point, filter Filter, depthStencil bool) (*frame, error) {
-	if color, err := newTexture(size, filter, ColorFormatRGBA, nil); err != nil {
+func NewFrame(size image.Point, filter Filter, depthStencil bool) (*frame, error) {
+	if color, err := NewTexture(size, filter, ColorFormatRGBA, nil); err != nil {
 		return nil, err
 	} else {
 		fbo := &frame{
+			ref:   gl.CreateFramebuffer(),
 			color: color,
 		}
-		gl.GenFramebuffers(1, &fbo.ref)
+
 		runtime.SetFinalizer(fbo, (*frame).delete)
 
 		fbo.Begin()
@@ -63,7 +61,7 @@ func newFrame(size image.Point, filter Filter, depthStencil bool) (*frame, error
 		gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fbo.color.ref, 0)
 
 		if depthStencil {
-			if depth, err := newTexture(size, FilterLinear, colorFormatDepthStencil, nil); err != nil {
+			if depth, err := NewTexture(size, FilterLinear, colorFormatDepthStencil, nil); err != nil {
 				return nil, err
 			} else {
 				fbo.depth = depth

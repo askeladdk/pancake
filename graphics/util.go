@@ -3,7 +3,7 @@ package graphics
 import (
 	"fmt"
 
-	"github.com/go-gl/gl/v3.3-core/gl"
+	gl "github.com/askeladdk/pancake/graphics/opengl"
 )
 
 // GL_NO_ERROR
@@ -29,7 +29,7 @@ import (
 //     No images are attached to the framebuffer.
 // GL_FRAMEBUFFER_UNSUPPORTED
 //     The combination of internal formats of the attached images violates an implementation-dependent set of restrictions.
-func errorToString(code uint32) string {
+func errorToString(code gl.Enum) string {
 	switch code {
 	case gl.INVALID_ENUM:
 		return "GL_INVALID_ENUM"

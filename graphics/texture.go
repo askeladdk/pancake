@@ -4,10 +4,8 @@ import (
 	"errors"
 	"image"
 	"runtime"
-	"unsafe"
 
-	"github.com/faiface/mainthread"
-	"github.com/go-gl/gl/v3.3-core/gl"
+	gl "github.com/askeladdk/pancake/graphics/opengl"
 )
 
 const (
@@ -19,8 +17,8 @@ var texbinders = func(n uint32) []*binder {
 	for i := uint32(0); i < n; i++ {
 		x := i // gotcha
 		binders = append(binders, newBinder(func(ref uint32) {
-			gl.ActiveTexture(gl.TEXTURE0 + x)
-			gl.BindTexture(gl.TEXTURE_2D, ref)
+			gl.ActiveTexture(gl.Enum(gl.TEXTURE0 + x))
+			gl.BindTexture(gl.TEXTURE_2D, gl.Texture(ref))
 		}))
 	}
 	return binders
@@ -30,12 +28,12 @@ type texture struct {
 	size   image.Point
 	format ColorFormat
 	filter Filter
-	ref    uint32
+	ref    gl.Texture
 	mipmap bool
 }
 
 func (this *texture) BeginAt(unit int) {
-	texbinders[unit].bind(this.ref)
+	texbinders[unit].bind(uint32(this.ref))
 }
 
 func (this *texture) EndAt(unit int) {
@@ -82,11 +80,11 @@ func (this *texture) SetPixels(pixels []byte) {
 			0,
 			0,
 			0,
-			int32(this.size.X),
-			int32(this.size.Y),
+			this.size.X,
+			this.size.Y,
 			this.format.format(),
 			gl.UNSIGNED_BYTE,
-			gl.Ptr(pixels),
+			pixels,
 		)
 		panicError()
 	}
@@ -104,7 +102,7 @@ func (this *texture) Pixels(pixels []byte) []byte {
 		0,
 		this.format.format(),
 		gl.UNSIGNED_BYTE,
-		gl.Ptr(pixels),
+		pixels,
 	)
 	panicError()
 
@@ -116,39 +114,29 @@ func (this *texture) len() int {
 }
 
 func (this *texture) delete() {
-	mainthread.CallNonBlock(func() {
-		gl.DeleteTextures(1, &this.ref)
-	})
+	gl.DeleteTexture(this.ref)
 }
 
-func newTexture(size image.Point, filter Filter, format ColorFormat, pixels []byte) (*texture, error) {
+func NewTexture(size image.Point, filter Filter, format ColorFormat, pixels []byte) (*texture, error) {
 	tex := &texture{
+		ref:    gl.CreateTexture(),
 		size:   size,
 		format: format,
 	}
-	gl.GenTextures(1, &tex.ref)
 	runtime.SetFinalizer(tex, (*texture).delete)
 
 	tex.Begin()
 	defer tex.End()
 
-	var ptr unsafe.Pointer
-	if pixels != nil {
-		ptr = gl.Ptr(pixels)
-	} else {
-		ptr = unsafe.Pointer(nil)
-	}
-
 	gl.TexImage2D(
 		gl.TEXTURE_2D,
 		0,
 		format.internalFormat(),
-		int32(size.X),
-		int32(size.Y),
-		0,
+		size.X,
+		size.Y,
 		format.format(),
 		format.xtype(),
-		ptr,
+		pixels,
 	)
 
 	if err := checkError(); err != nil {

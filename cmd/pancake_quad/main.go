@@ -10,7 +10,7 @@ import (
 	"github.com/askeladdk/pancake"
 	"github.com/askeladdk/pancake/desktop"
 	"github.com/askeladdk/pancake/graphics"
-	"github.com/faiface/mainthread"
+	gl "github.com/askeladdk/pancake/graphics/opengl"
 )
 
 var vshader = `
@@ -70,33 +70,26 @@ func loadImage(path string) (*image.NRGBA, error) {
 }
 
 func run(win pancake.Window) {
-	var err error
-	var vx graphics.VertexSlice
-	var sh graphics.Shader
-	var driver graphics.Driver
-	var tx graphics.Texture
+	fmt.Println(gl.GetString(gl.VERSION))
 
-	mainthread.Call(func() {
-		driver = graphics.Get()
+	if vx, err := graphics.NewVertexSlice(quadFormat, 6, quad); err != nil {
+		panic(err)
+	} else if sh, err := graphics.NewShader(vshader, fshader); err != nil {
+		panic(err)
+	} else if img, err := loadImage("gamer-gopher.png"); err != nil {
+		panic(err)
+	} else if tx, err := graphics.NewTexture(
+		img.Bounds().Size(), graphics.FilterLinear,
+		graphics.ColorFormatRGBA, img.Pix); err != nil {
+		panic(err)
+	} else {
 
-		fmt.Println(driver.Version())
+		gl.Enable(gl.BLEND)
+		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-		if vx, err = driver.NewVertexSlice(quadFormat, 6, quad); err != nil {
-			panic(err)
-		} else if sh, err = driver.NewShader(vshader, fshader); err != nil {
-			panic(err)
-		} else if img, err := loadImage("gamer-gopher.png"); err != nil {
-			panic(err)
-		} else if tx, err = driver.NewTexture(
-			img.Bounds().Size(), graphics.FilterLinear,
-			graphics.ColorFormatRGBA, img.Pix); err != nil {
-			panic(err)
-		}
-	})
-
-	for !win.ShouldClose() {
-		mainthread.Call(func() {
-			driver.Clear(1, 0, 0, 0)
+		for !win.ShouldClose() {
+			gl.ClearColor(1, 0, 0, 0)
+			gl.Clear(gl.COLOR_BUFFER_BIT)
 
 			tx.Begin()
 			sh.Begin()
@@ -105,9 +98,9 @@ func run(win pancake.Window) {
 			vx.End()
 			sh.End()
 			tx.End()
-		})
 
-		win.Update()
+			win.Update()
+		}
 	}
 }
 
@@ -115,6 +108,6 @@ func main() {
 	desktop.Run(pancake.WindowOptions{
 		Width:  640,
 		Height: 400,
-		Title:  "hello quad",
+		Title:  "hello gopher",
 	}, run)
 }

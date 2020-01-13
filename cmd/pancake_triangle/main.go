@@ -7,7 +7,7 @@ import (
 	"github.com/askeladdk/pancake"
 	"github.com/askeladdk/pancake/desktop"
 	"github.com/askeladdk/pancake/graphics"
-	"github.com/faiface/mainthread"
+	gl "github.com/askeladdk/pancake/graphics/opengl"
 )
 
 var vshader = `
@@ -56,27 +56,17 @@ var triangleFormat = graphics.AttrFormat{
 }
 
 func run(win pancake.Window) {
-	var err error
-	var vx graphics.VertexSlice
-	var sh graphics.Shader
-	var driver graphics.Driver
+	fmt.Println(gl.GetString(gl.VERSION))
 
-	mainthread.Call(func() {
-		driver = graphics.Get()
-
-		fmt.Println(driver.Version())
-
-		if vx, err = driver.NewVertexSlice(triangleFormat, 6, triangle); err != nil {
-			panic(err)
-		} else if sh, err = driver.NewShader(vshader, fshader); err != nil {
-			panic(err)
-		}
-	})
-
-	t0 := time.Now()
-	for !win.ShouldClose() {
-		mainthread.Call(func() {
-			driver.Clear(1, 0, 0, 0)
+	if vx, err := graphics.NewVertexSlice(triangleFormat, 6, triangle); err != nil {
+		panic(err)
+	} else if sh, err := graphics.NewShader(vshader, fshader); err != nil {
+		panic(err)
+	} else {
+		t0 := time.Now()
+		for !win.ShouldClose() {
+			gl.ClearColor(1, 0, 0, 0)
+			gl.Clear(gl.COLOR_BUFFER_BIT)
 
 			dt := time.Now().Sub(t0).Seconds()
 
@@ -88,9 +78,9 @@ func run(win pancake.Window) {
 			v.Draw()
 			v.End()
 			sh.End()
-		})
 
-		win.Update()
+			win.Update()
+		}
 	}
 }
 

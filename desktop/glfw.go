@@ -7,6 +7,7 @@ package desktop
 
 import (
 	"github.com/askeladdk/pancake"
+	"github.com/askeladdk/pancake/graphics/opengl"
 	"github.com/faiface/mainthread"
 	"github.com/go-gl/glfw/v3.3/glfw"
 )
@@ -50,6 +51,8 @@ func Run(opt pancake.WindowOptions, run func(pancake.Window)) {
 	if err := glfw.Init(); err != nil {
 		panic(err)
 	} else if wnd, err := newWindow(opt); err != nil {
+		panic(err)
+	} else if err := opengl.Init(nil); err != nil {
 		panic(err)
 	} else {
 		defer glfw.Terminate()

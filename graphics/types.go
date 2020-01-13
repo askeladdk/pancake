@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/go-gl/gl/v3.3-core/gl"
+	gl "github.com/askeladdk/pancake/graphics/opengl"
 )
 
 type Filter uint32
@@ -16,7 +16,7 @@ const (
 	FilterNearestNearest
 )
 
-func (this Filter) minparam() int32 {
+func (this Filter) minparam() gl.Enum {
 	switch this {
 	case FilterLinear:
 		return gl.LINEAR
@@ -31,7 +31,7 @@ func (this Filter) minparam() int32 {
 	}
 }
 
-func (this Filter) maxparam() int32 {
+func (this Filter) maxparam() gl.Enum {
 	switch this {
 	case FilterLinear:
 		return gl.LINEAR
@@ -69,7 +69,7 @@ const (
 	colorFormatDepthStencil
 )
 
-func (this ColorFormat) format() uint32 {
+func (this ColorFormat) format() gl.Enum {
 	switch this {
 	case ColorFormatRGBA:
 		return gl.RGBA
@@ -82,7 +82,7 @@ func (this ColorFormat) format() uint32 {
 	}
 }
 
-func (this ColorFormat) internalFormat() int32 {
+func (this ColorFormat) internalFormat() gl.Enum {
 	switch this {
 	case ColorFormatRGBA:
 		return gl.RGBA
@@ -95,7 +95,7 @@ func (this ColorFormat) internalFormat() int32 {
 	}
 }
 
-func (this ColorFormat) xtype() uint32 {
+func (this ColorFormat) xtype() gl.Enum {
 	switch this {
 	case ColorFormatRGBA:
 		return gl.UNSIGNED_BYTE
@@ -139,7 +139,7 @@ const (
 	Mat43
 )
 
-func (this AttrType) components() int32 {
+func (this AttrType) components() int {
 	switch this {
 	case Float:
 		return 1
@@ -172,7 +172,7 @@ func (this AttrType) components() int32 {
 	}
 }
 
-func (this AttrType) repeat() int32 {
+func (this AttrType) repeat() int {
 	switch this {
 	case Mat2:
 		return 2
@@ -197,14 +197,14 @@ func (this AttrType) repeat() int32 {
 	}
 }
 
-func (this AttrType) stride() int32 {
+func (this AttrType) stride() int {
 	return 4 * this.components()
 }
 
 type AttrFormat []AttrType
 
-func (this AttrFormat) stride() int32 {
-	var stride int32
+func (this AttrFormat) stride() int {
+	var stride int
 	for _, a := range this {
 		stride += a.stride() * a.repeat()
 	}
