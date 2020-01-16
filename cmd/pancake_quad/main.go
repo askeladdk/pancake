@@ -99,7 +99,7 @@ func run(win pancake.Window) {
 			sh.End()
 			tx.End()
 
-			win.Update()
+			win.SwapBuffers()
 		}
 	}
 }

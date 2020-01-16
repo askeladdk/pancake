@@ -21,7 +21,7 @@ func (this *window) ShouldClose() bool {
 	return this.window.ShouldClose()
 }
 
-func (this *window) Update() {
+func (this *window) SwapBuffers() {
 	mainthread.Call(func() {
 		this.window.SwapBuffers()
 		glfw.PollEvents()
@@ -29,8 +29,17 @@ func (this *window) Update() {
 }
 
 func (this *window) Bounds() image.Rectangle {
-	w, h := this.window.GetSize()
+	var w, h int
+	mainthread.Call(func() {
+		w, h = this.window.GetSize()
+	})
 	return image.Rectangle{image.Point{}, image.Point{w, h}}
+}
+
+func (this *window) SetTitle(title string) {
+	mainthread.Call(func() {
+		this.window.SetTitle(title)
+	})
 }
 
 func newWindow(opt WindowOptions) (*window, error) {

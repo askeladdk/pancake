@@ -7,7 +7,8 @@ import (
 type Window interface {
 	ShouldClose() bool
 	Bounds() image.Rectangle
-	Update()
+	SetTitle(string)
+	SwapBuffers()
 }
 
 type WindowOptions struct {
