@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
+	"image"
 	"time"
 
 	"github.com/askeladdk/pancake"
-	"github.com/askeladdk/pancake/desktop"
 	"github.com/askeladdk/pancake/graphics"
 	gl "github.com/askeladdk/pancake/graphics/opengl"
 )
@@ -50,7 +50,7 @@ var triangle = []float32{
 	-0.2, -0.2, 0, 0, 1,
 }
 
-var triangleFormat = graphics.AttrFormat{
+var triangleFormat = graphics.AttribFormat{
 	graphics.Vec2, // x, y
 	graphics.Vec3, // r, g, b
 }
@@ -58,11 +58,12 @@ var triangleFormat = graphics.AttrFormat{
 func run(win pancake.Window) {
 	fmt.Println(gl.GetString(gl.VERSION))
 
-	if vx, err := graphics.NewVertexSlice(triangleFormat, 6, triangle); err != nil {
-		panic(err)
-	} else if sh, err := graphics.NewShader(vshader, fshader); err != nil {
+	if sh, err := graphics.NewShaderProgram(vshader, fshader); err != nil {
 		panic(err)
 	} else {
+		buffer := graphics.NewBuffer(triangleFormat, 6, triangle)
+		vx := graphics.NewVertexSlice(buffer)
+
 		t0 := time.Now()
 		for !win.ShouldClose() {
 			gl.ClearColor(1, 0, 0, 0)
@@ -75,7 +76,7 @@ func run(win pancake.Window) {
 			sh.Begin()
 			sh.SetUniform("dt", float32(dt))
 			v.Begin()
-			v.Draw()
+			v.Draw(gl.TRIANGLES)
 			v.End()
 			sh.End()
 
@@ -85,9 +86,8 @@ func run(win pancake.Window) {
 }
 
 func main() {
-	desktop.Run(pancake.WindowOptions{
-		Width:  640,
-		Height: 400,
-		Title:  "hello triangle",
+	pancake.Run(pancake.WindowOptions{
+		Size:  image.Point{640, 400},
+		Title: "hello triangle",
 	}, run)
 }

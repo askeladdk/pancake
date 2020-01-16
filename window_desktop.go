@@ -3,13 +3,14 @@
 // +build !android
 // +build !ios
 
-package desktop
+package pancake
 
 import (
-	"github.com/askeladdk/pancake"
-	"github.com/askeladdk/pancake/graphics/opengl"
+	"image"
+
+	gl "github.com/askeladdk/pancake/graphics/opengl"
 	"github.com/faiface/mainthread"
-	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/go-gl/glfw/v3.1/glfw"
 )
 
 type window struct {
@@ -27,11 +28,12 @@ func (this *window) Update() {
 	})
 }
 
-func (this *window) Size() (int, int) {
-	return this.window.GetSize()
+func (this *window) Bounds() image.Rectangle {
+	w, h := this.window.GetSize()
+	return image.Rectangle{image.Point{}, image.Point{w, h}}
 }
 
-func newWindow(opt pancake.WindowOptions) (*window, error) {
+func newWindow(opt WindowOptions) (*window, error) {
 	// glfw.WindowHint(glfw.ScaleToMonitor, glfw.True)
 	glfw.WindowHint(glfw.Resizable, glfw.False)
 	glfw.WindowHint(glfw.ContextVersionMajor, 3)
@@ -39,7 +41,7 @@ func newWindow(opt pancake.WindowOptions) (*window, error) {
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
 
-	if win, err := glfw.CreateWindow(opt.Width, opt.Height, opt.Title, nil, nil); err != nil {
+	if win, err := glfw.CreateWindow(opt.Size.X, opt.Size.Y, opt.Title, nil, nil); err != nil {
 		return nil, err
 	} else {
 		win.MakeContextCurrent()
@@ -47,12 +49,12 @@ func newWindow(opt pancake.WindowOptions) (*window, error) {
 	}
 }
 
-func Run(opt pancake.WindowOptions, run func(pancake.Window)) {
+func Run(opt WindowOptions, run func(Window)) {
 	if err := glfw.Init(); err != nil {
 		panic(err)
 	} else if wnd, err := newWindow(opt); err != nil {
 		panic(err)
-	} else if err := opengl.Init(nil); err != nil {
+	} else if err := gl.Init(nil); err != nil {
 		panic(err)
 	} else {
 		defer glfw.Terminate()

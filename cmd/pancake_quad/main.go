@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/askeladdk/pancake"
-	"github.com/askeladdk/pancake/desktop"
 	"github.com/askeladdk/pancake/graphics"
 	gl "github.com/askeladdk/pancake/graphics/opengl"
 )
@@ -43,16 +42,17 @@ void main()
 }
 `
 
-var quad = []float32{
+var vertices = []float32{
+	// x, y, u, v
 	-1, -1, 0, 1,
 	+1, -1, 1, 1,
-	+1, +1, 1, 0,
-	-1, -1, 0, 1,
 	+1, +1, 1, 0,
 	-1, +1, 0, 0,
 }
 
-var quadFormat = graphics.AttrFormat{
+var indices = []uint8{0, 1, 2, 0, 2, 3}
+
+var quadFormat = graphics.AttribFormat{
 	graphics.Vec2, // x, y
 	graphics.Vec2, // u, v
 }
@@ -72,17 +72,17 @@ func loadImage(path string) (*image.NRGBA, error) {
 func run(win pancake.Window) {
 	fmt.Println(gl.GetString(gl.VERSION))
 
-	if vx, err := graphics.NewVertexSlice(quadFormat, 6, quad); err != nil {
-		panic(err)
-	} else if sh, err := graphics.NewShader(vshader, fshader); err != nil {
+	if sh, err := graphics.NewShaderProgram(vshader, fshader); err != nil {
 		panic(err)
 	} else if img, err := loadImage("gamer-gopher.png"); err != nil {
 		panic(err)
-	} else if tx, err := graphics.NewTexture(
-		img.Bounds().Size(), graphics.FilterLinear,
-		graphics.ColorFormatRGBA, img.Pix); err != nil {
-		panic(err)
 	} else {
+		tx := graphics.NewTexture(
+			img.Bounds().Size(), graphics.FilterLinear, graphics.ColorFormatRGBA, img.Pix)
+
+		buffer := graphics.NewBuffer(quadFormat, 6, vertices)
+		ebo := graphics.NewIndexBufferUint8(indices)
+		vx := graphics.NewIndexedVertexSlice(ebo, buffer)
 
 		gl.Enable(gl.BLEND)
 		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -94,7 +94,7 @@ func run(win pancake.Window) {
 			tx.Begin()
 			sh.Begin()
 			vx.Begin()
-			vx.Draw()
+			vx.Draw(gl.TRIANGLES)
 			vx.End()
 			sh.End()
 			tx.End()
@@ -105,9 +105,8 @@ func run(win pancake.Window) {
 }
 
 func main() {
-	desktop.Run(pancake.WindowOptions{
-		Width:  640,
-		Height: 400,
-		Title:  "hello gopher",
+	pancake.Run(pancake.WindowOptions{
+		Size:  image.Point{640, 400},
+		Title: "hello gopher",
 	}, run)
 }

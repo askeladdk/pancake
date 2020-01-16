@@ -12,50 +12,14 @@ type Filter uint32
 const (
 	FilterLinear Filter = iota
 	FilterNearest
-	FilterLinearMipmap
-	FilterNearestNearest
 )
 
-func (this Filter) minparam() gl.Enum {
+func (this Filter) param() gl.Enum {
 	switch this {
 	case FilterLinear:
 		return gl.LINEAR
 	case FilterNearest:
 		return gl.NEAREST
-	case FilterLinearMipmap:
-		return gl.LINEAR_MIPMAP_LINEAR
-	case FilterNearestNearest:
-		return gl.NEAREST_MIPMAP_NEAREST
-	default:
-		panic(errors.New("invalid filter"))
-	}
-}
-
-func (this Filter) maxparam() gl.Enum {
-	switch this {
-	case FilterLinear:
-		return gl.LINEAR
-	case FilterNearest:
-		return gl.NEAREST
-	case FilterLinearMipmap:
-		return gl.LINEAR
-	case FilterNearestNearest:
-		return gl.NEAREST
-	default:
-		panic(errors.New("invalid filter"))
-	}
-}
-
-func (this Filter) mipmap() bool {
-	switch this {
-	case FilterLinear:
-		return false
-	case FilterNearest:
-		return false
-	case FilterLinearMipmap:
-		return true
-	case FilterNearestNearest:
-		return true
 	default:
 		panic(errors.New("invalid filter"))
 	}
@@ -65,18 +29,18 @@ type ColorFormat uint32
 
 const (
 	ColorFormatRGBA ColorFormat = iota
+	ColorFormatRGB
 	ColorFormatIndexed
-	colorFormatDepthStencil
 )
 
 func (this ColorFormat) format() gl.Enum {
 	switch this {
 	case ColorFormatRGBA:
 		return gl.RGBA
+	case ColorFormatRGB:
+		return gl.RGB
 	case ColorFormatIndexed:
 		return gl.RED
-	case colorFormatDepthStencil:
-		return gl.DEPTH_STENCIL
 	default:
 		panic(errors.New("invalid color mode"))
 	}
@@ -86,23 +50,10 @@ func (this ColorFormat) internalFormat() gl.Enum {
 	switch this {
 	case ColorFormatRGBA:
 		return gl.RGBA
+	case ColorFormatRGB:
+		return gl.RGB
 	case ColorFormatIndexed:
 		return gl.R8
-	case colorFormatDepthStencil:
-		return gl.DEPTH24_STENCIL8
-	default:
-		panic(errors.New("invalid color mode"))
-	}
-}
-
-func (this ColorFormat) xtype() gl.Enum {
-	switch this {
-	case ColorFormatRGBA:
-		return gl.UNSIGNED_BYTE
-	case ColorFormatIndexed:
-		return gl.UNSIGNED_BYTE
-	case colorFormatDepthStencil:
-		return gl.UNSIGNED_INT_24_8
 	default:
 		panic(errors.New("invalid color mode"))
 	}
@@ -112,19 +63,19 @@ func (this ColorFormat) pixelSize() int {
 	switch this {
 	case ColorFormatRGBA:
 		return 4
+	case ColorFormatRGB:
+		return 4
 	case ColorFormatIndexed:
 		return 1
-	case colorFormatDepthStencil:
-		return 4
 	default:
 		panic(errors.New("invalid color mode"))
 	}
 }
 
-type AttrType uint32
+type AttribType uint32
 
 const (
-	Float AttrType = iota
+	Float AttribType = iota
 	Vec2
 	Vec3
 	Vec4
@@ -139,7 +90,7 @@ const (
 	Mat43
 )
 
-func (this AttrType) components() int {
+func (this AttribType) components() int {
 	switch this {
 	case Float:
 		return 1
@@ -172,7 +123,7 @@ func (this AttrType) components() int {
 	}
 }
 
-func (this AttrType) repeat() int {
+func (this AttribType) repeat() int {
 	switch this {
 	case Mat2:
 		return 2
@@ -197,13 +148,13 @@ func (this AttrType) repeat() int {
 	}
 }
 
-func (this AttrType) stride() int {
+func (this AttribType) stride() int {
 	return 4 * this.components()
 }
 
-type AttrFormat []AttrType
+type AttribFormat []AttribType
 
-func (this AttrFormat) stride() int {
+func (this AttribFormat) stride() int {
 	var stride int
 	for _, a := range this {
 		stride += a.stride() * a.repeat()

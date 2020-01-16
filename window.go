@@ -1,13 +1,16 @@
 package pancake
 
+import (
+	"image"
+)
+
 type Window interface {
 	ShouldClose() bool
-	Size() (int, int)
+	Bounds() image.Rectangle
 	Update()
 }
 
 type WindowOptions struct {
-	Title  string
-	Width  int
-	Height int
+	Title string
+	Size  image.Point
 }

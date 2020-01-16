@@ -12,11 +12,11 @@ import (
 	"golang.org/x/mobile/gl"
 )
 
-var c mgl.Context3
+var c mgl.Context
 
 func Init(param interface{}) {
-	if c3, ok := param.(gl.Context3); !ok {
-		panic(errors.New("gl package not compiled with ES3 support"))
+	if c3, ok := param.(gl.Context); !ok {
+		panic(errors.New("gl package not compiled with ES2 support"))
 	} else {
 		c = c3
 	}

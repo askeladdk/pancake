@@ -9,70 +9,53 @@ import (
 )
 
 const (
-	TextureUnitsCount = 48 // Minimum number of texture units according to the spec.
+	TextureUnitsCount = 48 // Minimum number of Texture units according to the spec.
 )
 
 var texbinders = func(n uint32) []*binder {
 	var binders []*binder
 	for i := uint32(0); i < n; i++ {
 		x := i // gotcha
-		binders = append(binders, newBinder(func(ref uint32) {
+		binders = append(binders, newBinder(func(id uint32) {
 			gl.ActiveTexture(gl.Enum(gl.TEXTURE0 + x))
-			gl.BindTexture(gl.TEXTURE_2D, gl.Texture(ref))
+			gl.BindTexture(gl.TEXTURE_2D, gl.Texture(id))
 		}))
 	}
 	return binders
 }(TextureUnitsCount)
 
-type texture struct {
+type Texture struct {
 	size   image.Point
 	format ColorFormat
-	filter Filter
-	ref    gl.Texture
-	mipmap bool
+	id     gl.Texture
 }
 
-func (this *texture) BeginAt(unit int) {
-	texbinders[unit].bind(uint32(this.ref))
+func (tex *Texture) BeginAt(unit int) {
+	texbinders[unit].bind(uint32(tex.id))
 }
 
-func (this *texture) EndAt(unit int) {
+func (tex *Texture) EndAt(unit int) {
 	texbinders[unit].unbind()
 }
 
-func (this *texture) Begin() {
-	this.BeginAt(0)
+func (tex *Texture) Begin() {
+	tex.BeginAt(0)
 }
 
-func (this *texture) End() {
-	this.EndAt(0)
+func (tex *Texture) End() {
+	tex.EndAt(0)
 }
 
-func (this *texture) Size() image.Point {
-	return this.size
+func (tex *Texture) Size() image.Point {
+	return tex.size
 }
 
-func (this *texture) ColorFormat() ColorFormat {
-	return this.format
+func (tex *Texture) ColorFormat() ColorFormat {
+	return tex.format
 }
 
-func (this *texture) Filter() Filter {
-	return this.filter
-}
-
-func (this *texture) SetFilter(filter Filter) {
-	if filter.mipmap() && !this.mipmap {
-		gl.GenerateMipmap(gl.TEXTURE_2D)
-		this.mipmap = true
-	}
-
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter.minparam())
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter.maxparam())
-	this.filter = filter
-}
-
-func (this *texture) SetPixels(pixels []byte) {
-	if len(pixels) != this.len() {
+func (tex *Texture) SetPixels(pixels []byte) {
+	if len(pixels) != tex.len() {
 		panic(errors.New("wrong buffer size"))
 	} else {
 		gl.TexSubImage2D(
@@ -80,9 +63,9 @@ func (this *texture) SetPixels(pixels []byte) {
 			0,
 			0,
 			0,
-			this.size.X,
-			this.size.Y,
-			this.format.format(),
+			tex.size.X,
+			tex.size.Y,
+			tex.format.format(),
 			gl.UNSIGNED_BYTE,
 			pixels,
 		)
@@ -90,17 +73,17 @@ func (this *texture) SetPixels(pixels []byte) {
 	}
 }
 
-func (this *texture) Pixels(pixels []byte) []byte {
+func (tex *Texture) Pixels(pixels []byte) []byte {
 	if pixels == nil {
-		pixels = make([]byte, this.len())
-	} else if len(pixels) < this.len() {
+		pixels = make([]byte, tex.len())
+	} else if len(pixels) < tex.len() {
 		panic(errors.New("buffer too small"))
 	}
 
 	gl.GetTexImage(
 		gl.TEXTURE_2D,
 		0,
-		this.format.format(),
+		tex.format.format(),
 		gl.UNSIGNED_BYTE,
 		pixels,
 	)
@@ -109,21 +92,21 @@ func (this *texture) Pixels(pixels []byte) []byte {
 	return pixels
 }
 
-func (this *texture) len() int {
-	return this.size.Y * this.size.X * this.ColorFormat().pixelSize()
+func (tex *Texture) len() int {
+	return tex.size.Y * tex.size.X * tex.ColorFormat().pixelSize()
 }
 
-func (this *texture) delete() {
-	gl.DeleteTexture(this.ref)
+func (tex *Texture) delete() {
+	gl.DeleteTexture(tex.id)
 }
 
-func NewTexture(size image.Point, filter Filter, format ColorFormat, pixels []byte) (*texture, error) {
-	tex := &texture{
-		ref:    gl.CreateTexture(),
+func NewTexture(size image.Point, filter Filter, format ColorFormat, pixels []byte) *Texture {
+	tex := &Texture{
+		id:     gl.CreateTexture(),
 		size:   size,
 		format: format,
 	}
-	runtime.SetFinalizer(tex, (*texture).delete)
+	runtime.SetFinalizer(tex, (*Texture).delete)
 
 	tex.Begin()
 	defer tex.End()
@@ -135,17 +118,14 @@ func NewTexture(size image.Point, filter Filter, format ColorFormat, pixels []by
 		size.X,
 		size.Y,
 		format.format(),
-		format.xtype(),
+		gl.UNSIGNED_BYTE,
 		pixels,
 	)
 
-	if err := checkError(); err != nil {
-		return nil, err
-	}
-
-	tex.SetFilter(filter)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter.param())
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter.param())
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
 
-	return tex, checkError()
+	return tex
 }

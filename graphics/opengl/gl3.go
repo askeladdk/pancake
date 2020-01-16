@@ -5,10 +5,12 @@
 package opengl
 
 import (
+	"image"
 	"unsafe"
 
 	"github.com/faiface/mainthread"
 	"github.com/go-gl/gl/v3.3-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 func Init(param interface{}) error {
@@ -35,9 +37,9 @@ func DeleteBuffer(buffer Buffer) {
 	})
 }
 
-func BindFramebuffer(target Enum, frame Framebuffer) {
+func BindFramebuffer(frame Framebuffer) {
 	mainthread.Call(func() {
-		gl.BindFramebuffer(uint32(target), uint32(frame))
+		gl.BindFramebuffer(gl.FRAMEBUFFER, uint32(frame))
 	})
 }
 
@@ -53,6 +55,26 @@ func DeleteFramebuffer(frame Framebuffer) {
 	mainthread.CallNonBlock(func() {
 		gl.DeleteFramebuffers(1, (*uint32)(&frame))
 
+	})
+}
+
+func BindRenderbuffer(rbuf Renderbuffer) {
+	mainthread.Call(func() {
+		gl.BindRenderbuffer(gl.RENDERBUFFER, uint32(rbuf))
+	})
+}
+
+func CreateRenderbuffer() Renderbuffer {
+	var rbuf uint32
+	mainthread.Call(func() {
+		gl.GenRenderbuffers(1, &rbuf)
+	})
+	return Renderbuffer(rbuf)
+}
+
+func DeleteRenderbuffer(rbuf Renderbuffer) {
+	mainthread.CallNonBlock(func() {
+		gl.GenRenderbuffers(1, (*uint32)(&rbuf))
 	})
 }
 
@@ -148,6 +170,14 @@ func BlendFunc(sfactor, dfactor Enum) {
 	})
 }
 
+func GetInteger(name Enum) int {
+	var data int32
+	mainthread.Call(func() {
+		gl.GetIntegerv(uint32(name), &data)
+	})
+	return int(data)
+}
+
 func GetString(name Enum) string {
 	var str string
 	mainthread.Call(func() {
@@ -156,9 +186,9 @@ func GetString(name Enum) string {
 	return str
 }
 
-func Viewport(x, y, w, h int) {
+func Viewport(b image.Rectangle) {
 	mainthread.Call(func() {
-		gl.Viewport(int32(x), int32(y), int32(w), int32(h))
+		gl.Viewport(int32(b.Min.X), int32(b.Min.Y), int32(b.Max.X), int32(b.Max.Y))
 	})
 }
 
@@ -191,17 +221,24 @@ func BlitNamedFramebuffer(
 	})
 }
 
-func FramebufferTexture2D(target, attachment, textarget Enum, texture Texture, level int) {
+func FramebufferTexture2D(attachment, textarget Enum, texture Texture, level int) {
 	mainthread.Call(func() {
-		gl.FramebufferTexture2D(uint32(target), uint32(attachment),
+		gl.FramebufferTexture2D(gl.FRAMEBUFFER, uint32(attachment),
 			uint32(textarget), uint32(texture), int32(level))
 	})
 }
 
-func CheckFramebufferStatus(target Enum) Enum {
+func FramebufferRenderbuffer(attachment, rbuffer Renderbuffer) {
+	mainthread.Call(func() {
+		gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, uint32(attachment),
+			gl.RENDERBUFFER, uint32(rbuffer))
+	})
+}
+
+func CheckFramebufferStatus() Enum {
 	var status uint32
 	mainthread.Call(func() {
-		status = gl.CheckFramebufferStatus(uint32(target))
+		status = gl.CheckFramebufferStatus(gl.FRAMEBUFFER)
 	})
 	return Enum(status)
 }
@@ -232,39 +269,45 @@ func Uniform1f(dst Uniform, v0 float32) {
 	})
 }
 
-func Uniform2fv(dst Uniform, vs []float32) {
+func Uniform1fv(dst Uniform, v []float32) {
 	mainthread.Call(func() {
-		gl.Uniform2fv(int32(dst), 1, &vs[0])
+		gl.Uniform1fv(int32(dst), int32(len(v)), &v[0])
 	})
 }
 
-func Uniform3fv(dst Uniform, vs []float32) {
+func Uniform2fv(dst Uniform, vs []mgl32.Vec2) {
 	mainthread.Call(func() {
-		gl.Uniform3fv(int32(dst), 1, &vs[0])
+		gl.Uniform2fv(int32(dst), int32(2*len(vs)), &vs[0][0])
 	})
 }
 
-func Uniform4fv(dst Uniform, vs []float32) {
+func Uniform3fv(dst Uniform, vs []mgl32.Vec3) {
 	mainthread.Call(func() {
-		gl.Uniform4fv(int32(dst), 1, &vs[0])
+		gl.Uniform3fv(int32(dst), int32(3*len(vs)), &vs[0][0])
 	})
 }
 
-func UniformMatrix2fv(dst Uniform, vs []float32) {
+func Uniform4fv(dst Uniform, vs []mgl32.Vec4) {
 	mainthread.Call(func() {
-		gl.UniformMatrix2fv(int32(dst), 1, false, &vs[0])
+		gl.Uniform4fv(int32(dst), int32(4*len(vs)), &vs[0][0])
 	})
 }
 
-func UniformMatrix3fv(dst Uniform, vs []float32) {
+func UniformMatrix2fv(dst Uniform, vs []mgl32.Mat2) {
 	mainthread.Call(func() {
-		gl.UniformMatrix3fv(int32(dst), 1, false, &vs[0])
+		gl.UniformMatrix2fv(int32(dst), int32(4*4*len(vs)), false, &vs[0][0])
 	})
 }
 
-func UniformMatrix4fv(dst Uniform, vs []float32) {
+func UniformMatrix3fv(dst Uniform, vs []mgl32.Mat3) {
 	mainthread.Call(func() {
-		gl.UniformMatrix4fv(int32(dst), 1, false, &vs[0])
+		gl.UniformMatrix3fv(int32(dst), int32(9*4*len(vs)), false, &vs[0][0])
+	})
+}
+
+func UniformMatrix4fv(dst Uniform, vs []mgl32.Mat4) {
+	mainthread.Call(func() {
+		gl.UniformMatrix4fv(int32(dst), int32(16*4*len(vs)), false, &vs[0][0])
 	})
 }
 
@@ -445,5 +488,11 @@ func Flush() {
 func ClearColor(r, g, b, a float32) {
 	mainthread.Call(func() {
 		gl.ClearColor(r, g, b, a)
+	})
+}
+
+func RenderbufferStorage(internalFormat Enum, width, height, samples int) {
+	mainthread.Call(func() {
+		gl.RenderbufferStorageMultisample(gl.RENDERBUFFER, int32(samples), uint32(internalFormat), int32(width), int32(height))
 	})
 }
