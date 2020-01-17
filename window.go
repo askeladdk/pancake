@@ -8,6 +8,7 @@ type Window interface {
 	ShouldClose() bool
 	Bounds() image.Rectangle
 	SetTitle(string)
+	PollEvents()
 	SwapBuffers()
 }
 

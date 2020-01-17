@@ -94,9 +94,10 @@ func (loop *fixedTimeStepLoop) Run(window Window) {
 
 	loop.window = window
 
+mainloop:
 	for {
 		if window.ShouldClose() {
-			loop.nextState = EmptyState
+			break mainloop
 		}
 
 		t1 := time.Now()
@@ -105,21 +106,19 @@ func (loop *fixedTimeStepLoop) Run(window Window) {
 
 		for accumulator >= loop.deltaTime {
 			accumulator -= loop.deltaTime
+			window.PollEvents()
+			loop.state.Frame(loop)
 
 			// state transition
-			if loop.nextState != nil {
+			if loop.nextState == EmptyState {
+				break mainloop
+			} else if loop.nextState != nil {
 				loop.state.End(loop)
-
-				if loop.nextState == EmptyState {
-					return
-				}
-
 				loop.nextState.Begin(loop)
 				loop.state, loop.nextState = loop.nextState, nil
 			}
 
-			loop.state.Frame(loop)
-
+			// frame counter
 			frameRate += 1
 			ft1 := time.Now()
 			if ft1.Sub(ft0).Seconds() >= 1 {
@@ -131,6 +130,8 @@ func (loop *fixedTimeStepLoop) Run(window Window) {
 		loop.state.Draw(loop)
 		window.SwapBuffers()
 	}
+
+	loop.state.End(loop)
 }
 
 // NewFixedTimeStepLoop creates a Loop that renders as often as possible

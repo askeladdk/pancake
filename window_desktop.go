@@ -21,10 +21,15 @@ func (this *window) ShouldClose() bool {
 	return this.window.ShouldClose()
 }
 
-func (this *window) SwapBuffers() {
+func (wnd *window) PollEvents() {
 	mainthread.Call(func() {
-		this.window.SwapBuffers()
 		glfw.PollEvents()
+	})
+}
+
+func (wnd *window) SwapBuffers() {
+	mainthread.Call(func() {
+		wnd.window.SwapBuffers()
 	})
 }
 
