@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"image"
 
+	"github.com/askeladdk/pancake/input"
+
 	"github.com/askeladdk/pancake"
 	"github.com/askeladdk/pancake/graphics"
 	gl "github.com/askeladdk/pancake/graphics/opengl"
@@ -30,11 +32,11 @@ var fshader = `
 in vec3 color;
 out vec4 out_color;
 
-uniform float dt;
+uniform float t;
 
 void main()
 {
-    out_color = vec4(color * sin(dt), 1.0);
+    out_color = vec4(color * sin(t), 1.0);
 }
 `
 
@@ -51,13 +53,28 @@ var triangleFormat = graphics.AttribFormat{
 }
 
 type triangleState struct {
-	program *graphics.ShaderProgram
-	buffer  *graphics.Buffer
-	vslice  *graphics.VertexSlice
-	tn, tl  float64
+	program     *graphics.ShaderProgram
+	buffer      *graphics.Buffer
+	vslice      *graphics.VertexSlice
+	tn, tl      float64
+	interpolate bool
+	escape      bool
+}
+
+func (state *triangleState) KeyEvent(event input.KeyEvent) {
+	if event.Flags.Pressed() {
+		switch event.Key {
+		case input.KeySpace:
+			state.interpolate = !state.interpolate
+		case input.KeyEscape:
+			state.escape = true
+		}
+	}
 }
 
 func (state *triangleState) Begin(loop pancake.Loop) {
+	loop.Window().SetKeyEventHandler(state)
+
 	fmt.Println(gl.GetString(gl.VERSION))
 	if program, err := graphics.NewShaderProgram(vshader, fshader); err != nil {
 		panic(err)
@@ -74,22 +91,33 @@ func (state *triangleState) End(loop pancake.Loop) {
 }
 
 func (state *triangleState) Frame(loop pancake.Loop) {
+	if state.escape {
+		loop.Transition(pancake.EmptyState)
+		return
+	}
+
 	// store the last state and calculate the next state.
 	state.tl, state.tn = state.tn, state.tn+loop.DeltaTime()
 
-	loop.Window().SetTitle(fmt.Sprintf("FPS: %d | Elapsed: %.1fs", loop.FrameRate(), state.tn))
+	loop.Window().SetTitle(fmt.Sprintf("FPS: %d | Elapsed: %.1fs | SPACE toggles interpolation", loop.FrameRate(), state.tn))
 }
 
 func (state *triangleState) Draw(loop pancake.Loop) {
 	gl.ClearColor(1, 0, 0, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 
-	// interpolate between current and previous state.
-	a := loop.Alpha()
-	dt := state.tn*a + state.tl*(1-a)
+	var t float64
+	if state.interpolate {
+		// linear interpolation between current and previous state.
+		a := loop.Alpha()
+		t = state.tn*a + state.tl*(1-a)
+	} else {
+		// no interpolation
+		t = state.tn
+	}
 
 	state.program.Begin()
-	state.program.SetUniform("dt", float32(dt))
+	state.program.SetUniform("t", float32(t))
 	state.vslice.Begin()
 	state.vslice.Draw(gl.TRIANGLES)
 	state.vslice.End()
