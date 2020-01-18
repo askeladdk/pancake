@@ -295,19 +295,19 @@ func Uniform4fv(dst Uniform, vs []mgl32.Vec4) {
 
 func UniformMatrix2fv(dst Uniform, vs []mgl32.Mat2) {
 	mainthread.Call(func() {
-		gl.UniformMatrix2fv(int32(dst), int32(4*4*len(vs)), false, &vs[0][0])
+		gl.UniformMatrix2fv(int32(dst), int32(len(vs)), false, &vs[0][0])
 	})
 }
 
 func UniformMatrix3fv(dst Uniform, vs []mgl32.Mat3) {
 	mainthread.Call(func() {
-		gl.UniformMatrix3fv(int32(dst), int32(9*4*len(vs)), false, &vs[0][0])
+		gl.UniformMatrix3fv(int32(dst), int32(len(vs)), false, &vs[0][0])
 	})
 }
 
 func UniformMatrix4fv(dst Uniform, vs []mgl32.Mat4) {
 	mainthread.Call(func() {
-		gl.UniformMatrix4fv(int32(dst), int32(16*4*len(vs)), false, &vs[0][0])
+		gl.UniformMatrix4fv(int32(dst), int32(len(vs)), false, &vs[0][0])
 	})
 }
 
