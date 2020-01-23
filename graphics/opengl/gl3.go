@@ -186,9 +186,10 @@ func GetString(name Enum) string {
 	return str
 }
 
-func Viewport(b image.Rectangle) {
+func Viewport(r image.Rectangle) {
 	mainthread.Call(func() {
-		gl.Viewport(int32(b.Min.X), int32(b.Min.Y), int32(b.Max.X), int32(b.Max.Y))
+		size := r.Size()
+		gl.Viewport(int32(r.Min.X), int32(r.Min.Y), int32(size.X), int32(size.Y))
 	})
 }
 
@@ -206,17 +207,13 @@ func GetError() Enum {
 	return Enum(err)
 }
 
-func BlitNamedFramebuffer(
-	readFramebuffer, drawFramebuffer Framebuffer,
-	sx0, sy0, sx1, sy1,
-	dx0, dy0, dx1, dy1 int,
-	mask uint32, filter Enum) {
+func BlitNamedFramebuffer(src, dst Framebuffer, sr, dr image.Rectangle, mask, filter Enum) {
 	mainthread.Call(func() {
 		gl.BlitNamedFramebuffer(
-			uint32(readFramebuffer), uint32(drawFramebuffer),
-			int32(sx0), int32(sy0), int32(sx1), int32(sy1),
-			int32(dx0), int32(dy0), int32(dx1), int32(dy1),
-			mask, uint32(filter),
+			uint32(src), uint32(dst),
+			int32(sr.Min.X), int32(sr.Min.Y), int32(sr.Max.X), int32(sr.Max.Y),
+			int32(dr.Min.X), int32(dr.Min.Y), int32(dr.Max.X), int32(dr.Max.Y),
+			uint32(mask), uint32(filter),
 		)
 	})
 }
@@ -494,5 +491,12 @@ func ClearColor(r, g, b, a float32) {
 func RenderbufferStorage(internalFormat Enum, width, height, samples int) {
 	mainthread.Call(func() {
 		gl.RenderbufferStorageMultisample(gl.RENDERBUFFER, int32(samples), uint32(internalFormat), int32(width), int32(height))
+	})
+}
+
+func Scissor(r image.Rectangle) {
+	mainthread.Call(func() {
+		size := r.Size()
+		gl.Scissor(int32(r.Min.X), int32(r.Min.Y), int32(size.X), int32(size.Y))
 	})
 }
