@@ -3,6 +3,7 @@ package pancake
 import (
 	"image"
 
+	"github.com/askeladdk/pancake/graphics"
 	"github.com/askeladdk/pancake/input"
 )
 
@@ -11,13 +12,15 @@ type Window interface {
 	SetKeyEventHandler(handler input.KeyEventHandler)
 	SetMouseEventHandler(handler input.MouseEventHandler)
 	ShouldClose() bool
-	Bounds() image.Rectangle
+	Framebuffer() *graphics.Framebuffer
 	SetTitle(string)
 	PollEvents()
 	SwapBuffers()
 }
 
-type WindowOptions struct {
-	Title string
-	Size  image.Point
+type Options struct {
+	WindowSize image.Point
+	Resolution image.Point
+	Title      string
+	FrameRate  int
 }

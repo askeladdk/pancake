@@ -55,7 +55,9 @@ func (tex *Texture) ColorFormat() ColorFormat {
 }
 
 func (tex *Texture) SetPixels(pixels []byte) {
-	if len(pixels) != tex.len() {
+	if tex.id == 0 {
+		panic(errors.New("screen texture cannot be accessed"))
+	} else if len(pixels) != tex.len() {
 		panic(errors.New("wrong buffer size"))
 	} else {
 		gl.TexSubImage2D(
@@ -74,7 +76,9 @@ func (tex *Texture) SetPixels(pixels []byte) {
 }
 
 func (tex *Texture) Pixels(pixels []byte) []byte {
-	if pixels == nil {
+	if tex.id == 0 {
+		panic(errors.New("screen texture cannot be accessed"))
+	} else if pixels == nil {
 		pixels = make([]byte, tex.len())
 	} else if len(pixels) < tex.len() {
 		panic(errors.New("buffer too small"))

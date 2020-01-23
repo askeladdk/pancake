@@ -128,8 +128,9 @@ func main() {
 	// targetFrameRate is deliberately set low in order
 	// to demonstrate interpolation in Draw().
 	loop := pancake.NewFixedTimeStepLoop(&triangleState{}, 5)
-	pancake.Run(pancake.WindowOptions{
-		Size:  image.Point{640, 400},
-		Title: "hello triangle",
+	pancake.Run(pancake.Options{
+		WindowSize: image.Point{640, 400},
+		Resolution: image.Point{640, 400},
+		Title:      "hello triangle",
 	}, loop.Run)
 }

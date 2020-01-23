@@ -13,6 +13,7 @@ var fbobinder = newBinder(func(id uint32) {
 })
 
 type Framebuffer struct {
+	offset  image.Point
 	color   *Texture
 	depth   *renderbuffer
 	stencil *renderbuffer
@@ -27,28 +28,30 @@ func (fbo *Framebuffer) End() {
 	fbobinder.unbind()
 }
 
-func (fbo *Framebuffer) Texture() *Texture {
+func (fbo *Framebuffer) Bounds() image.Rectangle {
+	return image.Rectangle{fbo.offset, fbo.offset.Add(fbo.color.Size())}
+}
+
+func (fbo *Framebuffer) Color() *Texture {
 	return fbo.color
 }
 
 func (fbo *Framebuffer) Blit(dst *Framebuffer, dr, sr image.Rectangle, filter Filter) {
-	gl.BlitNamedFramebuffer(
-		fbo.id, dst.id,
-		sr.Min.X, sr.Min.Y, sr.Max.X, sr.Max.Y,
-		dr.Min.X, dr.Min.Y, dr.Max.X, dr.Max.Y,
-		gl.COLOR_BUFFER_BIT, filter.param(),
-	)
-	panicError()
+	gl.BlitNamedFramebuffer(fbo.id, dst.id, sr, dr, gl.COLOR_BUFFER_BIT, filter.param())
 }
 
 func (fbo *Framebuffer) delete() {
 	gl.DeleteFramebuffer(fbo.id)
 }
 
-func NewFramebuffer(size image.Point, filter Filter, depth, stencil bool) (*Framebuffer, error) {
+func NewFramebufferFromTexture(color *Texture, depthStencil bool) (*Framebuffer, error) {
+	if color.ColorFormat() != ColorFormatRGB && color.ColorFormat() != ColorFormatRGBA {
+		return nil, errors.New("color texture must be in RGB(A) color format")
+	}
+
 	fbo := &Framebuffer{
 		id:    gl.CreateFramebuffer(),
-		color: NewTexture(size, filter, ColorFormatRGBA, nil),
+		color: color,
 	}
 
 	runtime.SetFinalizer(fbo, (*Framebuffer).delete)
@@ -58,19 +61,33 @@ func NewFramebuffer(size image.Point, filter Filter, depth, stencil bool) (*Fram
 
 	gl.FramebufferTexture2D(gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fbo.color.id, 0)
 
-	if depth {
-		fbo.depth = newRenderbuffer(size, gl.DEPTH_COMPONENT16, 0)
-		gl.FramebufferRenderbuffer(gl.DEPTH_ATTACHMENT, fbo.depth.id)
-	}
-
-	if stencil {
-		fbo.stencil = newRenderbuffer(size, gl.STENCIL_INDEX8, 0)
-		gl.FramebufferRenderbuffer(gl.STENCIL_ATTACHMENT, fbo.stencil.id)
+	if depthStencil {
+		depthStencilBuffer := newRenderbuffer(color.Size(), gl.DEPTH24_STENCIL8, 0)
+		gl.FramebufferRenderbuffer(gl.DEPTH_STENCIL_ATTACHMENT, depthStencilBuffer.id)
+		fbo.depth = depthStencilBuffer
+		fbo.stencil = depthStencilBuffer
 	}
 
 	if code := gl.CheckFramebufferStatus(); code != gl.FRAMEBUFFER_COMPLETE {
 		return nil, errors.New(errorToString(code))
 	} else {
 		return fbo, nil
+	}
+}
+
+func NewFramebuffer(size image.Point, filter Filter, depthStencil bool) (*Framebuffer, error) {
+	color := NewTexture(size, filter, ColorFormatRGBA, nil)
+	return NewFramebufferFromTexture(color, depthStencil)
+}
+
+func NewFramebufferFromScreen(bounds image.Rectangle) *Framebuffer {
+	return &Framebuffer{
+		offset: bounds.Min,
+		id:     0,
+		color: &Texture{
+			size:   bounds.Size(),
+			format: ColorFormatRGBA,
+			id:     0,
+		},
 	}
 }

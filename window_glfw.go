@@ -8,15 +8,17 @@ package pancake
 import (
 	"image"
 
-	gl "github.com/askeladdk/pancake/graphics/opengl"
+	"github.com/askeladdk/pancake/graphics"
 	"github.com/askeladdk/pancake/input"
 
+	gl "github.com/askeladdk/pancake/graphics/opengl"
 	"github.com/faiface/mainthread"
 	"github.com/go-gl/glfw/v3.1/glfw"
 )
 
 type window struct {
 	window            *glfw.Window
+	framebuffer       *graphics.Framebuffer
 	charEventHandler  input.CharEventHandler
 	keyEventHandler   input.KeyEventHandler
 	mouseEventHandler input.MouseEventHandler
@@ -40,12 +42,16 @@ func (wnd *window) SwapBuffers() {
 	})
 }
 
-func (wnd *window) Bounds() image.Rectangle {
+func (wnd *window) Size() image.Point {
 	var w, h int
 	mainthread.Call(func() {
-		w, h = wnd.window.GetSize()
+		w, h = wnd.window.GetFramebufferSize()
 	})
-	return image.Rectangle{image.Point{}, image.Point{w, h}}
+	return image.Point{w, h}
+}
+
+func (wnd *window) Framebuffer() *graphics.Framebuffer {
+	return wnd.framebuffer
 }
 
 func (wnd *window) SetTitle(title string) {
@@ -156,25 +162,31 @@ func (wnd *window) mouseCallback(_ *glfw.Window, button glfw.MouseButton, action
 	}
 }
 
-func newWindow(opt WindowOptions) (*window, error) {
+func newWindow(opt Options) (*window, error) {
 	glfw.WindowHint(glfw.Resizable, glfw.False)
 	glfw.WindowHint(glfw.ContextVersionMajor, 3)
 	glfw.WindowHint(glfw.ContextVersionMinor, 3)
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
+	glfw.WindowHint(glfw.DoubleBuffer, glfw.True)
 
-	if glfwwnd, err := glfw.CreateWindow(opt.Size.X, opt.Size.Y, opt.Title, nil, nil); err != nil {
+	if glfwwnd, err := glfw.CreateWindow(opt.WindowSize.X, opt.WindowSize.Y, opt.Title, nil, nil); err != nil {
 		return nil, err
 	} else {
-		wnd := &window{
-			window: glfwwnd,
-		}
 		glfwwnd.MakeContextCurrent()
-		return wnd, nil
+
+		fw, fh := glfwwnd.GetFramebufferSize()
+		viewport := logicalViewport(image.Point{fw, fh}, opt.Resolution)
+		framebuffer := graphics.NewFramebufferFromScreen(viewport)
+
+		return &window{
+			window:      glfwwnd,
+			framebuffer: framebuffer,
+		}, nil
 	}
 }
 
-func Run(opt WindowOptions, run func(Window)) {
+func Run(opt Options, run func(Window)) {
 	if err := glfw.Init(); err != nil {
 		panic(err)
 	} else if wnd, err := newWindow(opt); err != nil {

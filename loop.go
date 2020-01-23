@@ -1,6 +1,8 @@
 package pancake
 
-import "time"
+import (
+	"time"
+)
 
 // Loop regulates frame rates and handles top-level state management.
 type Loop interface {
