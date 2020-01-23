@@ -18,11 +18,11 @@ import (
 // The implementation is taken from
 // https://github.com/go-gl
 func Ptr(data interface{}) unsafe.Pointer {
-	if data == nil {
-		return unsafe.Pointer(nil)
-	}
 	var addr unsafe.Pointer
 	v := reflect.ValueOf(data)
+	if v.IsNil() {
+		return unsafe.Pointer(nil)
+	}
 	switch v.Type().Kind() {
 	case reflect.Ptr:
 		e := v.Elem()
