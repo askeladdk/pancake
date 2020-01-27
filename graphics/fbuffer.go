@@ -9,7 +9,7 @@ import (
 )
 
 var fbobinder = newBinder(func(id uint32) {
-	gl.BindFramebuffer(gl.Framebuffer(id))
+	gl.BindFramebuffer(gl.FRAMEBUFFER, gl.Framebuffer(id))
 })
 
 type Framebuffer struct {
@@ -37,7 +37,11 @@ func (fbo *Framebuffer) Color() *Texture {
 }
 
 func (fbo *Framebuffer) Blit(dst *Framebuffer, dr, sr image.Rectangle, filter Filter) {
-	gl.BlitNamedFramebuffer(fbo.id, dst.id, sr, dr, gl.COLOR_BUFFER_BIT, filter.param())
+	gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, dst.id)
+	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, fbo.id)
+	gl.BlitFramebuffer(sr, dr, gl.COLOR_BUFFER_BIT, filter.param())
+	gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, 0)
+	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, 0)
 }
 
 func (fbo *Framebuffer) delete() {

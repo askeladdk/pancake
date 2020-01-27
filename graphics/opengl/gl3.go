@@ -37,9 +37,9 @@ func DeleteBuffer(buffer Buffer) {
 	})
 }
 
-func BindFramebuffer(frame Framebuffer) {
+func BindFramebuffer(target Enum, frame Framebuffer) {
 	mainthread.Call(func() {
-		gl.BindFramebuffer(gl.FRAMEBUFFER, uint32(frame))
+		gl.BindFramebuffer(uint32(target), uint32(frame))
 	})
 }
 
@@ -207,10 +207,9 @@ func GetError() Enum {
 	return Enum(err)
 }
 
-func BlitNamedFramebuffer(src, dst Framebuffer, sr, dr image.Rectangle, mask, filter Enum) {
+func BlitFramebuffer(sr, dr image.Rectangle, mask, filter Enum) {
 	mainthread.Call(func() {
-		gl.BlitNamedFramebuffer(
-			uint32(src), uint32(dst),
+		gl.BlitFramebuffer(
 			int32(sr.Min.X), int32(sr.Min.Y), int32(sr.Max.X), int32(sr.Max.Y),
 			int32(dr.Min.X), int32(dr.Min.Y), int32(dr.Max.X), int32(dr.Max.Y),
 			uint32(mask), uint32(filter),
