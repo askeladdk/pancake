@@ -12,6 +12,7 @@ import (
 	"github.com/askeladdk/pancake/graphics"
 	gl "github.com/askeladdk/pancake/graphics/opengl"
 	"github.com/askeladdk/pancake/graphics/postprocessing"
+	"github.com/askeladdk/pancake/input"
 	"github.com/go-gl/mathgl/mgl32"
 )
 
@@ -86,100 +87,95 @@ func loadImage(path string) (*image.NRGBA, error) {
 	}
 }
 
-type quadState struct {
-	program *graphics.ShaderProgram
-	vslice  *graphics.IndexedVertexSlice
-	texture *graphics.Texture
-	frame   *graphics.Framebuffer
-	pp      *postprocessing.Processor
-}
-
-func (state *quadState) Begin(loop pancake.Loop) {
+func run(app pancake.App) error {
 	fmt.Println(gl.GetString(gl.VERSION))
 
 	if program, err := graphics.NewShaderProgram(vshader, fshader); err != nil {
-		panic(err)
+		return err
 	} else if img, err := loadImage("gamer-gopher.png"); err != nil {
-		panic(err)
+		return err
 	} else if frame, err := graphics.NewFramebuffer(LogicalResolution, graphics.FilterNearest, false); err != nil {
-		panic(err)
+		return err
 	} else {
 		// drawing variables
-		state.program = program
-		state.texture = graphics.NewTexture(
+		texture := graphics.NewTexture(
 			img.Bounds().Size(), graphics.FilterLinear, graphics.ColorFormatRGBA, img.Pix)
 		buffer := graphics.NewBuffer(quadFormat, 6, vertices)
 		ebo := graphics.NewIndexBufferUint8(indices)
-		state.vslice = graphics.NewIndexedVertexSlice(ebo, buffer)
+		vslice := graphics.NewIndexedVertexSlice(ebo, buffer)
 
 		// post processing variables
-		state.pp = postprocessing.NewProcessor()
-		state.frame = frame
+		pp := postprocessing.NewProcessor()
 
 		gl.Enable(gl.BLEND)
 		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 		gl.ClearColor(0, 0, 0, 0)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
+
+		return app.Events(func(ev interface{}) error {
+			switch e := ev.(type) {
+			case pancake.KeyEvent:
+				if e.Flags.Pressed() && e.Key == input.KeyEscape {
+					return pancake.Quit
+				}
+			case pancake.DrawEvent:
+				frame.Begin()
+				gl.Viewport(frame.Bounds())
+
+				gl.ClearColor(1, 0, 0, 1)
+				gl.Clear(gl.COLOR_BUFFER_BIT)
+
+				// setup modelview matrix
+				// scale to the size of the texture
+				// and translate to centre at the frame
+				texsz := texture.Size()
+				framesz := frame.Bounds().Size()
+				scale := mgl32.Scale2D(float32(texsz.X), float32(texsz.Y))
+				translate := mgl32.Translate2D(float32(framesz.X/2), float32(framesz.Y/2))
+				modelview := translate.Mul3(scale)
+
+				projection := mgl32.Ortho2D(
+					0,
+					float32(LogicalResolution.X),
+					float32(LogicalResolution.Y),
+					0,
+				)
+
+				texture.Begin()
+				program.Begin()
+				program.SetUniform("projection", projection)
+				program.SetUniform("modelview", modelview)
+				vslice.Begin()
+				vslice.Draw(gl.TRIANGLES)
+				vslice.End()
+				program.End()
+				texture.End()
+
+				frame.End()
+
+				pp.Do(
+					postprocessing.Targets{
+						frame,
+						app.Framebuffer(),
+					},
+					postprocessing.Effects{
+						pp.Blit(),
+					},
+				)
+			}
+
+			return nil
+		})
 	}
 }
 
-func (state *quadState) End(loop pancake.Loop) {
-}
-
-func (state *quadState) Frame(loop pancake.Loop) {
-}
-
-func (state *quadState) Draw(loop pancake.Loop) {
-	gl.Viewport(state.frame.Bounds())
-	state.frame.Begin()
-
-	gl.ClearColor(1, 0, 0, 1)
-	gl.Clear(gl.COLOR_BUFFER_BIT)
-
-	// setup modelview matrix
-	// scale to the size of the texture
-	// and translate to centre at the frame
-	texsz := state.texture.Size()
-	framesz := state.frame.Bounds().Size()
-	scale := mgl32.Scale2D(float32(texsz.X), float32(texsz.Y))
-	translate := mgl32.Translate2D(float32(framesz.X/2), float32(framesz.Y/2))
-	modelview := translate.Mul3(scale)
-
-	projection := mgl32.Ortho2D(
-		0,
-		float32(LogicalResolution.X),
-		float32(LogicalResolution.Y),
-		0,
-	)
-
-	state.texture.Begin()
-	state.program.Begin()
-	state.program.SetUniform("projection", projection)
-	state.program.SetUniform("modelview", modelview)
-	state.vslice.Begin()
-	state.vslice.Draw(gl.TRIANGLES)
-	state.vslice.End()
-	state.program.End()
-	state.texture.End()
-
-	state.frame.End()
-
-	state.pp.Do(
-		postprocessing.Targets{
-			state.frame,
-			loop.Window().Framebuffer(),
-		},
-		postprocessing.Effects{
-			state.pp.Blit(),
-		},
-	)
-}
-
 func main() {
-	loop := pancake.NewFixedTimeStepLoop(&quadState{}, 60)
-	pancake.Run(pancake.Options{
+	opt := pancake.Options{
 		WindowSize: image.Point{800, 600},
-		Resolution: image.Point{640, 480},
+		Resolution: LogicalResolution,
 		Title:      "hello gopher",
-	}, loop.Run)
+		FrameRate:  60,
+	}
+
+	pancake.Main(opt, run)
 }
