@@ -17,8 +17,12 @@ type KeyEvent struct {
 }
 
 type MouseEvent struct {
-	Mouse    input.Mouse
+	Button   input.MouseButton
 	Flags    input.Flags
+	Position image.Point
+}
+
+type MouseMoveEvent struct {
 	Position image.Point
 }
 

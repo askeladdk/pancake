@@ -177,8 +177,7 @@ func (app *app) cursorEnterCallback(_ *glfw.Window, entered bool) {
 func (app *app) cursorCallback(_ *glfw.Window, x, y float64) {
 	if app.cursorEntered {
 		app.mousePosition = image.Point{int(x), int(y)}
-		app.inputEvents = append(app.inputEvents, MouseEvent{
-			Mouse:    input.MouseMove,
+		app.inputEvents = append(app.inputEvents, MouseMoveEvent{
 			Position: app.mousePosition,
 		})
 	}
@@ -187,7 +186,7 @@ func (app *app) cursorCallback(_ *glfw.Window, x, y float64) {
 func (app *app) mouseCallback(_ *glfw.Window, button glfw.MouseButton, action glfw.Action, mod glfw.ModifierKey) {
 	if app.cursorEntered {
 		app.inputEvents = append(app.inputEvents, MouseEvent{
-			Mouse:    input.Mouse(button),
+			Button:   input.MouseButton(button),
 			Flags:    makeInputFlags(action, mod),
 			Position: app.mousePosition,
 		})

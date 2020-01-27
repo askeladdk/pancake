@@ -48,18 +48,17 @@ func (flags Flags) Super() bool {
 	return flags&Super != 0
 }
 
-type Mouse int
+type MouseButton int
 
 const (
-	MouseButton0 Mouse = 0
-	MouseButton1 Mouse = 1
-	MouseButton2 Mouse = 2
-	MouseButton3 Mouse = 3
-	MouseButton4 Mouse = 4
-	MouseButton5 Mouse = 5
-	MouseButton6 Mouse = 6
-	MouseButton7 Mouse = 7
-	MouseMove    Mouse = 8
+	MouseButton0 MouseButton = 0
+	MouseButton1 MouseButton = 1
+	MouseButton2 MouseButton = 2
+	MouseButton3 MouseButton = 3
+	MouseButton4 MouseButton = 4
+	MouseButton5 MouseButton = 5
+	MouseButton6 MouseButton = 6
+	MouseButton7 MouseButton = 7
 )
 
 type Key int
