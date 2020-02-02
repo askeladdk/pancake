@@ -13,7 +13,6 @@ var fbobinder = newBinder(func(id uint32) {
 })
 
 type Framebuffer struct {
-	offset  image.Point
 	color   *Texture
 	depth   *renderbuffer
 	stencil *renderbuffer
@@ -29,19 +28,15 @@ func (fbo *Framebuffer) End() {
 }
 
 func (fbo *Framebuffer) Bounds() image.Rectangle {
-	return image.Rectangle{fbo.offset, fbo.offset.Add(fbo.color.Size())}
+	return image.Rectangle{image.Point{}, fbo.color.Size()}
 }
 
 func (fbo *Framebuffer) Color() *Texture {
 	return fbo.color
 }
 
-func (fbo *Framebuffer) Blit(dst *Framebuffer, dr, sr image.Rectangle, filter Filter) {
-	gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, dst.id)
-	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, fbo.id)
-	gl.BlitFramebuffer(sr, dr, gl.COLOR_BUFFER_BIT, filter.param())
-	gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, 0)
-	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, 0)
+func (dst *Framebuffer) BlitFrom(src *Framebuffer, dr, sr image.Rectangle, mask gl.Enum, filter Filter) {
+	gl.BlitNamedFramebuffer(src.id, dst.id, sr, dr, mask, filter.param())
 }
 
 func (fbo *Framebuffer) delete() {
@@ -82,16 +77,4 @@ func NewFramebufferFromTexture(color *Texture, depthStencil bool) (*Framebuffer,
 func NewFramebuffer(size image.Point, filter Filter, depthStencil bool) (*Framebuffer, error) {
 	color := NewTexture(size, filter, ColorFormatRGBA, nil)
 	return NewFramebufferFromTexture(color, depthStencil)
-}
-
-func NewFramebufferFromScreen(bounds image.Rectangle) *Framebuffer {
-	return &Framebuffer{
-		offset: bounds.Min,
-		id:     0,
-		color: &Texture{
-			size:   bounds.Size(),
-			format: ColorFormatRGBA,
-			id:     0,
-		},
-	}
 }

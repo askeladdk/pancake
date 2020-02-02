@@ -58,13 +58,18 @@ func makeWindow(opt Options) (*glfw.Window, error) {
 }
 
 type App interface {
+	Bounds() image.Rectangle
 	Framebuffer() *graphics.Framebuffer
 	FrameRate() int
 	SetTitle(string)
 	Events(func(interface{}) error) error
+	Begin()
+	End()
 }
 
 type app struct {
+	resolution    image.Point
+	viewport      image.Rectangle
 	window        *glfw.Window
 	framebuffer   *graphics.Framebuffer
 	inputEvents   []interface{}
@@ -156,6 +161,30 @@ mainloop:
 	return nil
 }
 
+func (app *app) Begin() {
+	app.framebuffer.Begin()
+	gl.Viewport(app.framebuffer.Bounds())
+	gl.ClearColor(0, 0, 0, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT)
+}
+
+func (app *app) End() {
+	app.framebuffer.End()
+	screen := graphics.Framebuffer{}
+	screen.Begin()
+	gl.Viewport(app.viewport)
+	gl.ClearColor(0, 0, 0, 0)
+	gl.Clear(gl.COLOR_BUFFER_BIT)
+	screen.End()
+	screen.BlitFrom(app.framebuffer,
+		app.viewport, app.framebuffer.Bounds(),
+		gl.Enum(gl.COLOR_BUFFER_BIT), graphics.FilterLinear)
+}
+
+func (app *app) Bounds() image.Rectangle {
+	return image.Rectangle{image.Point{}, app.resolution}
+}
+
 func (app *app) charCallback(_ *glfw.Window, char rune) {
 	app.inputEvents = append(app.inputEvents, CharEvent{
 		Char: char,
@@ -222,10 +251,14 @@ func Main(opt Options, run func(App) error) error {
 		mainthread.Run(func() {
 			w, h := window.GetFramebufferSize()
 			viewport := logicalViewport(image.Point{w, h}, opt.Resolution)
+			framebuffer, _ := graphics.NewFramebuffer(viewport.Size(), graphics.FilterLinear, true)
+
 			a := app{
 				window:      window,
 				deltaTime:   1 / float64(opt.FrameRate),
-				framebuffer: graphics.NewFramebufferFromScreen(viewport),
+				viewport:    viewport,
+				resolution:  opt.Resolution,
+				framebuffer: framebuffer,
 			}
 
 			window.SetKeyCallback(a.keyCallback)
@@ -233,6 +266,9 @@ func Main(opt Options, run func(App) error) error {
 			window.SetCursorPosCallback(a.cursorCallback)
 			window.SetCursorEnterCallback(a.cursorEnterCallback)
 			window.SetMouseButtonCallback(a.mouseCallback)
+
+			gl.BindFramebuffer(gl.FRAMEBUFFER, gl.Framebuffer(0))
+			// gl.Viewport(viewport)
 
 			err = run(&a)
 		})

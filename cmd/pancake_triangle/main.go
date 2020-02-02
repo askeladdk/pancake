@@ -80,6 +80,7 @@ func run(app pancake.App) error {
 			tl, tn = tn, tn+e.DeltaTime
 			app.SetTitle(fmt.Sprintf("FPS: %d | Elapsed: %.1fs | SPACE toggles interpolation", app.FrameRate(), tn))
 		case pancake.DrawEvent:
+			app.Begin()
 			gl.ClearColor(1, 0, 0, 0)
 			gl.Clear(gl.COLOR_BUFFER_BIT)
 
@@ -99,6 +100,7 @@ func run(app pancake.App) error {
 			vslice.Draw(gl.TRIANGLES)
 			vslice.End()
 			program.End()
+			app.End()
 		}
 
 		return nil

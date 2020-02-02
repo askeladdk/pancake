@@ -5,13 +5,11 @@ import (
 	"image"
 	"image/draw"
 	"image/png"
-	"math"
 	"os"
 
 	"github.com/askeladdk/pancake"
 	"github.com/askeladdk/pancake/graphics"
 	gl "github.com/askeladdk/pancake/graphics/opengl"
-	"github.com/askeladdk/pancake/graphics/postprocessing"
 	"github.com/askeladdk/pancake/input"
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -66,10 +64,6 @@ var vertices = []float32{
 
 var indices = []uint8{0, 1, 2, 1, 2, 3}
 
-const Tau = 2 * math.Pi
-
-var LogicalResolution = image.Point{640, 480}
-
 var quadFormat = graphics.AttribFormat{
 	graphics.Vec2, // x, y
 	graphics.Vec2, // u, v
@@ -94,8 +88,6 @@ func run(app pancake.App) error {
 		return err
 	} else if img, err := loadImage("gamer-gopher.png"); err != nil {
 		return err
-	} else if frame, err := graphics.NewFramebuffer(LogicalResolution, graphics.FilterNearest, false); err != nil {
-		return err
 	} else {
 		// drawing variables
 		texture := graphics.NewTexture(
@@ -103,9 +95,6 @@ func run(app pancake.App) error {
 		buffer := graphics.NewBuffer(quadFormat, 6, vertices)
 		ebo := graphics.NewIndexBufferUint8(indices)
 		vslice := graphics.NewIndexedVertexSlice(ebo, buffer)
-
-		// post processing variables
-		pp := postprocessing.NewProcessor()
 
 		gl.Enable(gl.BLEND)
 		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -119,9 +108,7 @@ func run(app pancake.App) error {
 					return pancake.Quit
 				}
 			case pancake.DrawEvent:
-				frame.Begin()
-				gl.Viewport(frame.Bounds())
-
+				app.Begin()
 				gl.ClearColor(1, 0, 0, 1)
 				gl.Clear(gl.COLOR_BUFFER_BIT)
 
@@ -129,15 +116,15 @@ func run(app pancake.App) error {
 				// scale to the size of the texture
 				// and translate to centre at the frame
 				texsz := texture.Size()
-				framesz := frame.Bounds().Size()
+				framesz := app.Bounds().Size()
 				scale := mgl32.Scale2D(float32(texsz.X), float32(texsz.Y))
 				translate := mgl32.Translate2D(float32(framesz.X/2), float32(framesz.Y/2))
 				modelview := translate.Mul3(scale)
 
 				projection := mgl32.Ortho2D(
 					0,
-					float32(LogicalResolution.X),
-					float32(LogicalResolution.Y),
+					float32(framesz.X),
+					float32(framesz.Y),
 					0,
 				)
 
@@ -151,17 +138,7 @@ func run(app pancake.App) error {
 				program.End()
 				texture.End()
 
-				frame.End()
-
-				pp.Do(
-					postprocessing.Targets{
-						frame,
-						app.Framebuffer(),
-					},
-					postprocessing.Effects{
-						pp.Blit(),
-					},
-				)
+				app.End()
 			}
 
 			return nil
@@ -172,7 +149,7 @@ func run(app pancake.App) error {
 func main() {
 	opt := pancake.Options{
 		WindowSize: image.Point{800, 600},
-		Resolution: LogicalResolution,
+		Resolution: image.Point{640, 480},
 		Title:      "hello gopher",
 		FrameRate:  60,
 	}

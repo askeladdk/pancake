@@ -207,13 +207,17 @@ func GetError() Enum {
 	return Enum(err)
 }
 
-func BlitFramebuffer(sr, dr image.Rectangle, mask, filter Enum) {
+func BlitNamedFramebuffer(src, dst Framebuffer, sr, dr image.Rectangle, mask, filter Enum) {
 	mainthread.Call(func() {
+		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, uint32(dst))
+		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, uint32(src))
 		gl.BlitFramebuffer(
 			int32(sr.Min.X), int32(sr.Min.Y), int32(sr.Max.X), int32(sr.Max.Y),
 			int32(dr.Min.X), int32(dr.Min.Y), int32(dr.Max.X), int32(dr.Max.Y),
 			uint32(mask), uint32(filter),
 		)
+		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, 0)
+		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, 0)
 	})
 }
 
