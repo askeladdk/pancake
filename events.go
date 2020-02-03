@@ -6,6 +6,8 @@ import (
 	"github.com/askeladdk/pancake/input"
 )
 
+type QuitEvent struct{}
+
 type CharEvent struct {
 	Char rune
 }

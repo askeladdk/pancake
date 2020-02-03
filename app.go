@@ -1,7 +1,6 @@
 package pancake
 
 import (
-	"errors"
 	"image"
 	"time"
 
@@ -12,6 +11,15 @@ import (
 	"github.com/faiface/mainthread"
 	"github.com/go-gl/glfw/v3.1/glfw"
 )
+
+type constError string
+
+func (s constError) Error() string {
+	return string(s)
+}
+
+// Quit signals that the event loop must end.
+const Quit = constError("quit application")
 
 func makeInputFlags(action glfw.Action, mod glfw.ModifierKey) input.Flags {
 	var flags input.Flags
@@ -93,8 +101,6 @@ func (app *app) SetTitle(title string) {
 	})
 }
 
-var Quit = errors.New("quit app")
-
 func (app *app) Events(eventh func(interface{}) error) error {
 	// loop regulator variables
 	deltaTime := app.deltaTime
@@ -107,16 +113,17 @@ func (app *app) Events(eventh func(interface{}) error) error {
 
 mainloop:
 	for {
-		if app.window.ShouldClose() {
-			break mainloop
-		}
-
 		t1 := time.Now()
 		accumulator += t1.Sub(t0).Seconds()
 		t0 = t1
 
 		for accumulator >= deltaTime {
 			accumulator -= deltaTime
+
+			if app.window.ShouldClose() {
+				app.window.SetShouldClose(false)
+				app.inputEvents = append(app.inputEvents, QuitEvent{})
+			}
 
 			mainthread.Call(func() {
 				glfw.PollEvents()

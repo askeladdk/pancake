@@ -103,6 +103,8 @@ func run(app pancake.App) error {
 
 		return app.Events(func(ev interface{}) error {
 			switch e := ev.(type) {
+			case pancake.QuitEvent:
+				return pancake.Quit
 			case pancake.KeyEvent:
 				if e.Flags.Pressed() && e.Key == input.KeyEscape {
 					return pancake.Quit
