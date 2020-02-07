@@ -5,21 +5,22 @@ import (
 )
 
 func logicalViewport(window, resolution image.Point) image.Rectangle {
-	var vw, vh int
-	if window.X > window.Y {
-		vh = (window.Y / resolution.Y) * resolution.Y
-		vw = (vh * resolution.X) / resolution.Y
+	wAspectRatio := float32(window.X) / float32(window.Y)
+	rAspectRatio := float32(resolution.X) / float32(resolution.Y)
+	var scale int
+
+	if wAspectRatio > rAspectRatio {
+		scale = window.Y / resolution.Y
 	} else {
-		vw = (window.X / resolution.X) * resolution.X
-		vh = (vw * resolution.Y) / resolution.X
+		scale = window.X / resolution.X
 	}
 
-	bw := window.X - vw
-	bh := window.Y - vh
-	borderOffset := image.Point{bw / 2, bh / 2}
-	logicalSize := image.Point{window.X - bw, window.Y - bh}
+	logical := resolution.Mul(scale)
+	crop := window.Sub(logical)
+	border := crop.Div(2)
+
 	return image.Rectangle{
-		borderOffset,
-		borderOffset.Add(logicalSize),
+		border,
+		border.Add(logical),
 	}
 }
