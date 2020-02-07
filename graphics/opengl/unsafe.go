@@ -20,7 +20,7 @@ import (
 func Ptr(data interface{}) unsafe.Pointer {
 	var addr unsafe.Pointer
 	v := reflect.ValueOf(data)
-	if v.IsNil() {
+	if data == nil || v.IsNil() {
 		return unsafe.Pointer(nil)
 	}
 	switch v.Type().Kind() {
