@@ -35,7 +35,7 @@ func (vbo *Buffer) AttribFormat() AttribFormat {
 }
 
 func (vbo *Buffer) SetData(i, j int, data interface{}) {
-	if j > i && i >= 0 && j < vbo.count {
+	if j > i && i >= 0 && j <= vbo.count {
 		gl.BufferSubData(gl.ARRAY_BUFFER, i*vbo.stride, (j-i)*vbo.stride, gl.Ptr(data))
 	} else {
 		panic(errors.New("range out of bounds"))
