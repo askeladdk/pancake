@@ -76,7 +76,7 @@ type App interface {
 }
 
 type app struct {
-	windowSize    image.Point
+	windowScale   int
 	resolution    image.Point
 	viewport      image.Rectangle
 	window        *glfw.Window
@@ -212,11 +212,15 @@ func (app *app) cursorEnterCallback(_ *glfw.Window, entered bool) {
 }
 
 func (app *app) cursorCallback(_ *glfw.Window, x, y float64) {
-	if app.cursorEntered {
+	mouse := image.Point{int(x), int(y)}.Mul(app.windowScale)
+
+	if app.cursorEntered && mouse.In(app.viewport) {
 		// Scale the mouse position from window to resolution coordinates.
+		mouse = mouse.Sub(app.viewport.Min)
+		vpsz := app.viewport.Size()
 		app.mousePosition = image.Point{
-			int(x) * app.resolution.X / app.windowSize.X,
-			int(y) * app.resolution.Y / app.windowSize.Y,
+			mouse.X * app.resolution.X / vpsz.X,
+			mouse.Y * app.resolution.Y / vpsz.Y,
 		}
 
 		app.inputEvents = append(app.inputEvents, MouseMoveEvent{
@@ -267,7 +271,7 @@ func Main(opt Options, run func(App) error) error {
 			framebuffer, _ := graphics.NewFramebuffer(viewport.Size(), graphics.FilterLinear, true)
 
 			a := app{
-				windowSize:  image.Pt(window.GetSize()),
+				windowScale: w / opt.WindowSize.X,
 				window:      window,
 				deltaTime:   1 / float64(opt.FrameRate),
 				viewport:    viewport,
