@@ -48,6 +48,10 @@ func (flags Flags) Super() bool {
 	return flags&Super != 0
 }
 
+func (flags Flags) Down() bool {
+	return flags&(Pressed|Repeated) != 0
+}
+
 type MouseButton int
 
 const (
