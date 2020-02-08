@@ -3,9 +3,12 @@ package main
 import (
 	"fmt"
 	"image"
+	"image/color"
 
+	"github.com/askeladdk/pancake/graphics"
 	gl "github.com/askeladdk/pancake/graphics/opengl"
 	"github.com/askeladdk/pancake/input"
+	"github.com/askeladdk/pancake/mathx"
 	"github.com/go-gl/mathgl/mgl32"
 
 	"github.com/askeladdk/pancake"
@@ -23,6 +26,37 @@ type Entity struct {
 }
 
 type Entities []Entity
+
+func (es Entities) Len() int {
+	return len(es)
+}
+
+func (es Entities) Slice(i, j int) graphics2d.InstanceSlice {
+	return es[i:j]
+}
+
+func (es Entities) Color(i int) color.NRGBA {
+	return color.NRGBA{0xff, 0xff, 0xff, 0xff}
+}
+
+func (es Entities) Texture(i int) *graphics.Texture {
+	return es[i].Image.Texture
+}
+
+func (es Entities) TextureRegion(i int) mathx.Aff3 {
+	return es[i].Image.Region
+}
+
+func (es Entities) ModelView(i int) mathx.Aff3 {
+	return mathx.
+		ScaleAff3(es[i].Image.Size).
+		Rotated(es[i].Rot).
+		Translated(es[i].Pos)
+}
+
+type World struct {
+	Bounds image.Rectangle
+}
 
 func (entities Entities) Frame() Entities {
 	for _, e := range entities {
