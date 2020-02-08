@@ -11,7 +11,7 @@ import (
 	"github.com/askeladdk/pancake/graphics"
 	gl "github.com/askeladdk/pancake/graphics/opengl"
 	"github.com/askeladdk/pancake/input"
-	"github.com/go-gl/mathgl/mgl32"
+	"github.com/askeladdk/pancake/mathx"
 )
 
 var vshader = `
@@ -117,13 +117,13 @@ func run(app pancake.App) error {
 				// setup modelview matrix
 				// scale to the size of the texture
 				// and translate to centre at the frame
-				texsz := texture.Size()
+				texsz := texture.Bounds().Size()
 				framesz := app.Bounds().Size()
-				scale := mgl32.Scale2D(float32(texsz.X), float32(texsz.Y))
-				translate := mgl32.Translate2D(float32(framesz.X/2), float32(framesz.Y/2))
-				modelview := translate.Mul3(scale)
+				modelview := mathx.
+					ScaleAff3(mathx.FromPoint(texsz)).
+					Translated(mathx.FromPoint(framesz).Mul(0.5))
 
-				projection := mgl32.Ortho2D(
+				projection := mathx.Ortho2D(
 					0,
 					float32(framesz.X),
 					float32(framesz.Y),

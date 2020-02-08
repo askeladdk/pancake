@@ -28,7 +28,7 @@ func (fbo *Framebuffer) End() {
 }
 
 func (fbo *Framebuffer) Bounds() image.Rectangle {
-	return image.Rectangle{image.Point{}, fbo.color.Size()}
+	return fbo.color.Bounds()
 }
 
 func (fbo *Framebuffer) Color() *Texture {
@@ -61,7 +61,7 @@ func NewFramebufferFromTexture(color *Texture, depthStencil bool) (*Framebuffer,
 	gl.FramebufferTexture2D(gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fbo.color.id, 0)
 
 	if depthStencil {
-		depthStencilBuffer := newRenderbuffer(color.Size(), gl.DEPTH24_STENCIL8, 0)
+		depthStencilBuffer := newRenderbuffer(color.size, gl.DEPTH24_STENCIL8, 0)
 		gl.FramebufferRenderbuffer(gl.DEPTH_STENCIL_ATTACHMENT, depthStencilBuffer.id)
 		fbo.depth = depthStencilBuffer
 		fbo.stencil = depthStencilBuffer

@@ -3,6 +3,7 @@ package graphics
 import (
 	"errors"
 	"image"
+	"image/draw"
 	"runtime"
 
 	gl "github.com/askeladdk/pancake/graphics/opengl"
@@ -46,8 +47,8 @@ func (tex *Texture) End() {
 	tex.EndAt(0)
 }
 
-func (tex *Texture) Size() image.Point {
-	return tex.size
+func (tex *Texture) Bounds() image.Rectangle {
+	return image.Rectangle{image.Point{}, tex.size}
 }
 
 func (tex *Texture) ColorFormat() ColorFormat {
@@ -132,4 +133,22 @@ func NewTexture(size image.Point, filter Filter, format ColorFormat, pixels []by
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
 
 	return tex
+}
+
+func imagePix(img image.Image) ([]uint8, ColorFormat) {
+	switch im := img.(type) {
+	case *image.NRGBA:
+		return im.Pix, ColorFormatRGBA
+	case *image.Paletted:
+		return im.Pix, ColorFormatIndexed
+	default:
+		nrgba := image.NewNRGBA(img.Bounds())
+		draw.Draw(nrgba, nrgba.Bounds(), img, image.Point{}, draw.Src)
+		return nrgba.Pix, ColorFormatRGBA
+	}
+}
+
+func NewTextureFromImage(img image.Image, filter Filter) *Texture {
+	pix, format := imagePix(img)
+	return NewTexture(img.Bounds().Size(), filter, format, pix)
 }
