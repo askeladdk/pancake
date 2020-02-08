@@ -8,9 +8,9 @@ import (
 	"image"
 	"unsafe"
 
+	"github.com/askeladdk/pancake/mathx"
 	"github.com/faiface/mainthread"
 	"github.com/go-gl/gl/v3.3-core/gl"
-	"github.com/go-gl/mathgl/mgl32"
 )
 
 func Init(param interface{}) error {
@@ -275,37 +275,31 @@ func Uniform1fv(dst Uniform, v []float32) {
 	})
 }
 
-func Uniform2fv(dst Uniform, vs []mgl32.Vec2) {
+func Uniform2fv(dst Uniform, vs []mathx.Vec2) {
 	mainthread.Call(func() {
 		gl.Uniform2fv(int32(dst), int32(2*len(vs)), &vs[0][0])
 	})
 }
 
-func Uniform3fv(dst Uniform, vs []mgl32.Vec3) {
+func Uniform3fv(dst Uniform, vs []mathx.Vec3) {
 	mainthread.Call(func() {
 		gl.Uniform3fv(int32(dst), int32(3*len(vs)), &vs[0][0])
 	})
 }
 
-func Uniform4fv(dst Uniform, vs []mgl32.Vec4) {
+func Uniform4fv(dst Uniform, vs []mathx.Vec4) {
 	mainthread.Call(func() {
 		gl.Uniform4fv(int32(dst), int32(4*len(vs)), &vs[0][0])
 	})
 }
 
-func UniformMatrix2fv(dst Uniform, vs []mgl32.Mat2) {
-	mainthread.Call(func() {
-		gl.UniformMatrix2fv(int32(dst), int32(len(vs)), false, &vs[0][0])
-	})
-}
-
-func UniformMatrix3fv(dst Uniform, vs []mgl32.Mat3) {
+func UniformMatrix3fv(dst Uniform, vs []mathx.Mat3) {
 	mainthread.Call(func() {
 		gl.UniformMatrix3fv(int32(dst), int32(len(vs)), false, &vs[0][0])
 	})
 }
 
-func UniformMatrix4fv(dst Uniform, vs []mgl32.Mat4) {
+func UniformMatrix4fv(dst Uniform, vs []mathx.Mat4) {
 	mainthread.Call(func() {
 		gl.UniformMatrix4fv(int32(dst), int32(len(vs)), false, &vs[0][0])
 	})

@@ -14,8 +14,8 @@ const (
 	FilterNearest
 )
 
-func (this Filter) param() gl.Enum {
-	switch this {
+func (filter Filter) param() gl.Enum {
+	switch filter {
 	case FilterLinear:
 		return gl.LINEAR
 	case FilterNearest:
@@ -33,8 +33,8 @@ const (
 	ColorFormatIndexed
 )
 
-func (this ColorFormat) format() gl.Enum {
-	switch this {
+func (format ColorFormat) format() gl.Enum {
+	switch format {
 	case ColorFormatRGBA:
 		return gl.RGBA
 	case ColorFormatRGB:
@@ -46,8 +46,8 @@ func (this ColorFormat) format() gl.Enum {
 	}
 }
 
-func (this ColorFormat) internalFormat() gl.Enum {
-	switch this {
+func (format ColorFormat) internalFormat() gl.Enum {
+	switch format {
 	case ColorFormatRGBA:
 		return gl.RGBA
 	case ColorFormatRGB:
@@ -59,8 +59,8 @@ func (this ColorFormat) internalFormat() gl.Enum {
 	}
 }
 
-func (this ColorFormat) pixelSize() int {
-	switch this {
+func (format ColorFormat) pixelSize() int {
+	switch format {
 	case ColorFormatRGBA:
 		return 4
 	case ColorFormatRGB:
@@ -79,19 +79,13 @@ const (
 	Vec2
 	Vec3
 	Vec4
-	Mat2
-	Mat23
-	Mat24
 	Mat3
-	Mat32
-	Mat34
 	Mat4
-	Mat42
-	Mat43
+	Byte4
 )
 
-func (this AttribType) components() int {
-	switch this {
+func (atype AttribType) components() int {
+	switch atype {
 	case Float:
 		return 1
 	case Vec2:
@@ -100,63 +94,64 @@ func (this AttribType) components() int {
 		return 3
 	case Vec4:
 		return 4
-	case Mat2:
-		return 2
-	case Mat23:
-		return 2
-	case Mat24:
-		return 2
 	case Mat3:
-		return 3
-	case Mat32:
-		return 3
-	case Mat34:
 		return 3
 	case Mat4:
 		return 4
-	case Mat42:
-		return 4
-	case Mat43:
+	case Byte4:
 		return 4
 	default:
 		panic(fmt.Errorf("invalid attribute type"))
 	}
 }
 
-func (this AttribType) repeat() int {
-	switch this {
-	case Mat2:
-		return 2
-	case Mat23:
-		return 3
-	case Mat24:
-		return 4
+func (atype AttribType) repeat() int {
+	switch atype {
 	case Mat3:
 		return 3
-	case Mat32:
-		return 2
-	case Mat34:
-		return 4
 	case Mat4:
 		return 4
-	case Mat42:
-		return 2
-	case Mat43:
-		return 3
 	default:
 		return 1
 	}
 }
 
-func (this AttribType) stride() int {
-	return 4 * this.components()
+func (atype AttribType) bytes() int {
+	switch atype {
+	case Byte4:
+		return 1
+	default:
+		return 4
+	}
+}
+
+func (atype AttribType) xtype() gl.Enum {
+	switch atype {
+	case Byte4:
+		return gl.UNSIGNED_BYTE
+	default:
+		return gl.FLOAT
+	}
+}
+
+func (atype AttribType) normalised() bool {
+	switch atype {
+	case Byte4:
+		return true
+	default:
+		return false
+	}
+}
+
+func (atype AttribType) stride() int {
+	return atype.bytes() * atype.components()
 }
 
 type AttribFormat []AttribType
 
-func (this AttribFormat) stride() int {
+func (aformat AttribFormat) stride() int {
 	var stride int
-	for _, a := range this {
+	for _, a := range aformat {
 		stride += a.stride() * a.repeat()
 	}
 	return stride

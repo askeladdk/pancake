@@ -6,8 +6,7 @@ import (
 	"runtime"
 
 	gl "github.com/askeladdk/pancake/graphics/opengl"
-
-	"github.com/go-gl/mathgl/mgl32"
+	"github.com/askeladdk/pancake/mathx"
 )
 
 var shaderBinder = newBinder(func(prog uint32) {
@@ -52,32 +51,36 @@ func (prg *ShaderProgram) SetUniform(name string, value interface{}) bool {
 			gl.Uniform1ui(loc, v)
 		case float32:
 			gl.Uniform1f(loc, v)
-		case mgl32.Vec2:
-			gl.Uniform2fv(loc, []mgl32.Vec2{v})
-		case mgl32.Vec3:
-			gl.Uniform3fv(loc, []mgl32.Vec3{v})
-		case mgl32.Vec4:
-			gl.Uniform4fv(loc, []mgl32.Vec4{v})
-		case mgl32.Mat2:
-			gl.UniformMatrix2fv(loc, []mgl32.Mat2{v})
-		case mgl32.Mat3:
-			gl.UniformMatrix3fv(loc, []mgl32.Mat3{v})
-		case mgl32.Mat4:
-			gl.UniformMatrix4fv(loc, []mgl32.Mat4{v})
+		case mathx.Vec2:
+			gl.Uniform2fv(loc, []mathx.Vec2{v})
+		case mathx.Vec3:
+			gl.Uniform3fv(loc, []mathx.Vec3{v})
+		case mathx.Vec4:
+			gl.Uniform4fv(loc, []mathx.Vec4{v})
+		case mathx.Mat3:
+			gl.UniformMatrix3fv(loc, []mathx.Mat3{v})
+		case mathx.Mat4:
+			gl.UniformMatrix4fv(loc, []mathx.Mat4{v})
+		case mathx.Aff3:
+			gl.UniformMatrix3fv(loc, []mathx.Mat3{v.Mat3()})
 		case []float32:
 			gl.Uniform1fv(loc, v)
-		case []mgl32.Vec2:
+		case []mathx.Vec2:
 			gl.Uniform2fv(loc, v)
-		case []mgl32.Vec3:
+		case []mathx.Vec3:
 			gl.Uniform3fv(loc, v)
-		case []mgl32.Vec4:
+		case []mathx.Vec4:
 			gl.Uniform4fv(loc, v)
-		case []mgl32.Mat2:
-			gl.UniformMatrix2fv(loc, v)
-		case []mgl32.Mat3:
+		case []mathx.Mat3:
 			gl.UniformMatrix3fv(loc, v)
-		case []mgl32.Mat4:
+		case []mathx.Mat4:
 			gl.UniformMatrix4fv(loc, v)
+		case []mathx.Aff3:
+			xs := make([]mathx.Mat3, len(v))
+			for i, x := range v {
+				xs[i] = x.Mat3()
+			}
+			gl.UniformMatrix3fv(loc, xs)
 		default:
 			panic(errors.New("invalid type"))
 		}

@@ -94,7 +94,7 @@ func vaoAssignAttribs(buf *Buffer, attrib gl.Attrib) gl.Attrib {
 	for _, attr := range buf.AttribFormat() {
 		for i := 0; i < attr.repeat(); i++ {
 			gl.VertexAttribPointer(
-				attrib, attr.components(), gl.FLOAT, false, stride, offset)
+				attrib, attr.components(), attr.xtype(), attr.normalised(), stride, offset)
 			// gl.VertexAttribDivisor(attrib, divisor)
 			gl.EnableVertexAttribArray(attrib)
 			offset += attr.stride()
