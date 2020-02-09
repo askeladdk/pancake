@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"image"
-	"image/color"
 	"os"
 
 	_ "image/png"
@@ -21,65 +20,15 @@ import (
 // https://opengameart.org/content/asteroids-game-sprites-atlas
 // https://opengameart.org/content/purple-planet
 
-type Entity struct {
-	Image  graphics2d.Sprite
-	Pos    mathx.Vec2
-	Vel    mathx.Vec2
-	Acc    mathx.Vec2
-	Dampen float32
-	Rot    float32
-	RotV   float32
-	Alive  bool
-}
-
-type Entities []Entity
-
-func (es Entities) Len() int {
-	return len(es)
-}
-
-func (es Entities) Slice(i, j int) graphics2d.InstanceSlice {
-	return es[i:j]
-}
-
-func (es Entities) Color(i int) color.NRGBA {
-	return color.NRGBA{0xff, 0xff, 0xff, 0xff}
-}
-
-func (es Entities) Texture(i int) *graphics.Texture {
-	return es[i].Image.Texture
-}
-
-func (es Entities) TextureRegion(i int) mathx.Aff3 {
-	return es[i].Image.Region
-}
-
-func (es Entities) ModelView(i int) mathx.Aff3 {
-	return mathx.
-		ScaleAff3(es[i].Image.Size).
-		Rotated(es[i].Rot).
-		Translated(es[i].Pos)
-}
-
-type World struct {
-	Bounds image.Rectangle
-}
-
-func (entities Entities) Frame() Entities {
-	for i, e := range entities {
-		e.Vel = e.Vel.Add(e.Acc)
-		e.Acc = e.Acc.Mul(e.Dampen)
-		e.Vel[0] = mathx.Clamp(e.Vel[0], -2, 2)
-		e.Vel[1] = mathx.Clamp(e.Vel[1], -2, 2)
-		e.Pos = e.Pos.Add(e.Vel)
-		e.Rot = e.Rot + e.RotV
-		entities[i] = e
+func toggleFlag(flags uint32, flag uint32, state bool) uint32 {
+	if state {
+		return flags | flag
+	} else {
+		return flags &^ flag
 	}
-
-	return entities
 }
 
-func LoadTexture(filename string) (*graphics.Texture, error) {
+func loadTexture(filename string) (*graphics.Texture, error) {
 	if f, err := os.Open(filename); err != nil {
 		return nil, err
 	} else if img, _, err := image.Decode(f); err != nil {
@@ -93,22 +42,20 @@ func run(app pancake.App) error {
 	var sheet *graphics.Texture
 	var background graphics2d.Sprite
 
-	if tex, err := LoadTexture("asteroids-arcade.png"); err != nil {
+	if tex, err := loadTexture("asteroids-arcade.png"); err != nil {
 		return err
 	} else {
 		sheet = tex
 	}
 
-	if tex, err := LoadTexture("background.png"); err != nil {
+	if tex, err := loadTexture("background.png"); err != nil {
 		return err
 	} else {
 		background = graphics2d.NewSprite(tex, tex.Bounds())
 	}
 
 	ship := graphics2d.NewSprite(sheet, image.Rect(0, 0, 32, 32))
-
-	drawer := graphics2d.NewDrawer(1024, graphics2d.Quad)
-	program := graphics2d.DefaultShader()
+	asteroid := graphics2d.NewSprite(sheet, image.Rect(64, 192, 128, 256))
 
 	resolution := app.Bounds().Size()
 	projection := mathx.Ortho2D(
@@ -123,22 +70,59 @@ func run(app pancake.App) error {
 	gl.ClearColor(0, 0, 0, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 
-	entities := Entities{
-		Entity{
-			Image: background,
-			Pos:   mathx.FromPoint(app.Bounds().Size().Div(2)),
+	shipbrain := inputBrain{}
+
+	simulation := simulation{
+		sprites: []graphics2d.Sprite{
+			background,
+			ship,
+			asteroid,
 		},
-		Entity{
-			Image:  ship,
-			Pos:    mathx.FromPoint(app.Bounds().Size().Div(2)),
-			Rot:    -mathx.Tau / 4,
-			Dampen: 0,
+		bounds: mathx.Rectangle{
+			mathx.Vec2{},
+			mathx.FromPoint(resolution),
 		},
+		entities: []entity{
+			entity{
+				sprite: background,
+				pos:    mathx.FromPoint(app.Bounds().Size().Div(2)),
+			},
+			entity{
+				sprite:        ship,
+				pos:           mathx.FromPoint(app.Bounds().Size().Div(2)),
+				rot:           -mathx.Tau / 4,
+				minrotv:       1,
+				maxv:          2,
+				turn:          mathx.Tau / 4,
+				thrust:        4,
+				dampenr:       0.95,
+				dampenv:       0.99,
+				brain:         shipbrain.frame,
+				collisionMask: 1,
+				radius:        14,
+			},
+			// entity{
+			// 	sprite:        asteroid,
+			// 	pos:           mathx.FromPoint(app.Bounds().Size().Div(4)),
+			// 	turn:          mathx.Tau / 256,
+			// 	maxv:          1,
+			// 	rotv:          1,
+			// 	minrotv:       1,
+			// 	dampenr:       1,
+			// 	dampenv:       1,
+			// 	vel:           mathx.FromHeading(mathx.Tau / 5),
+			// 	collisionMask: 1,
+			// 	radius:        28,
+			// },
+		},
+		drawer:     graphics2d.NewDrawer(1024, graphics2d.Quad),
+		shader:     graphics2d.DefaultShader(),
+		projection: projection,
 	}
 
-	shipid := 1
+	// var mousepos mathx.Vec2
 
-	var mousepos mathx.Vec2
+	var keys uint32
 
 	return app.Events(func(event interface{}) error {
 		switch ev := event.(type) {
@@ -148,46 +132,58 @@ func run(app pancake.App) error {
 			switch ev.Key {
 			case input.KeyEscape:
 				return pancake.Quit
-			// case input.KeyLeft:
-			// 	if ev.Flags.Down() {
-			// 		entities[shipid].Rot -= mathx.Tau / 32
-			// 	}
-			// case input.KeyRight:
-			// 	if ev.Flags.Down() {
-			// 		entities[shipid].Rot += mathx.Tau / 32
-			// 	}
+			case input.KeyA:
+				fallthrough
+			case input.KeyLeft:
+				keys = toggleFlag(keys, 1, ev.Flags.Down())
+			case input.KeyD:
+				fallthrough
+			case input.KeyRight:
+				keys = toggleFlag(keys, 2, ev.Flags.Down())
 			case input.KeyW:
 				fallthrough
 			case input.KeyUp:
-				if ev.Flags.Down() {
-					acc := mathx.FromHeading(entities[shipid].Rot)
-					entities[shipid].Acc = acc
+				keys = toggleFlag(keys, 4, ev.Flags.Down())
+			case input.KeyP:
+				if ev.Flags.Pressed() {
+					simulation.spawnAsteroid()
 				}
 			}
-		case pancake.MouseMoveEvent:
-			mousepos = mathx.FromPoint(ev.Position)
+		// case pancake.MouseMoveEvent:
+		// 	mousepos = mathx.FromPoint(ev.Position)
 		case pancake.FrameEvent:
-			heading := mathx.FromHeading(entities[shipid].Rot)
-			target := mousepos.Sub(entities[shipid].Pos)
-			cross := target.Cross(heading)
-			if mathx.Abs(cross) < 1e-3 {
-				entities[shipid].RotV = 0
-			} else if cross < 0 {
-				entities[shipid].RotV = +mathx.Tau / 64
-			} else if cross > 0 {
-				entities[shipid].RotV = -mathx.Tau / 64
+			// entity := simulation.At(shipid)
+			// heading := mathx.FromHeading(entity.Rot)
+			// target := mousepos.Sub(entity.Pos)
+			// cross := target.Cross(heading)
+			// if mathx.Abs(cross) < 1e-1 {
+			// 	entity.Rot = target.Heading()
+			// 	entity.RotV = 0
+			// } else if cross < 0 {
+			// 	entity.RotV = +mathx.Tau / 64
+			// } else if cross > 0 {
+			// 	entity.RotV = -mathx.Tau / 64
+			// }
+			if keys&1 != 0 {
+				shipbrain.action(actionTurn, -1*float32(ev.DeltaTime))
 			}
-			entities = entities.Frame()
-			app.SetTitle(fmt.Sprintf("Asteroids - %d FPS | %v", app.FrameRate(), mousepos))
+
+			if keys&2 != 0 {
+				shipbrain.action(actionTurn, +1*float32(ev.DeltaTime))
+			}
+
+			if keys&4 != 0 {
+				shipbrain.action(actionForward, 1*float32(ev.DeltaTime))
+			}
+
+			simulation.frame()
+			app.SetTitle(fmt.Sprintf("Asteroids - %d FPS", app.FrameRate()))
 		case pancake.DrawEvent:
 			app.Begin()
 			gl.ClearColor(0, 0, 1, 0)
 			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-			program.Begin()
-			program.SetUniform("u_Projection", projection)
-			drawer.Draw(entities)
-			program.End()
+			simulation.draw()
 
 			app.End()
 		}
