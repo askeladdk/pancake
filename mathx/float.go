@@ -46,6 +46,7 @@ const (
 // 	return math.Float32bits(x)&signMask != 0
 // }
 
+// Min returns the smaller value given x and y.
 func Min(x, y float32) float32 {
 	if x < y {
 		return x
@@ -53,6 +54,7 @@ func Min(x, y float32) float32 {
 	return y
 }
 
+// Min returns the greater value given x and y.
 func Max(x, y float32) float32 {
 	if x > y {
 		return x
@@ -60,14 +62,34 @@ func Max(x, y float32) float32 {
 	return y
 }
 
+// Abs returns the absolute value of x.
 func Abs(x float32) float32 {
 	return math.Float32frombits(math.Float32bits(x) &^ signMask)
 }
 
+// Clamp returns x bounded by min and max.
 func Clamp(x, min, max float32) float32 {
-	return Min(Max(x, min), max)
+	if x < min {
+		return min
+	} else if x >= max {
+		return max
+	}
+	return x
 }
 
+// Wrap returns x wrapped around min and max.
+func Wrap(x, min, max float32) float32 {
+	if x < min {
+		return max
+	} else if x >= max {
+		return min
+	}
+	return x
+}
+
+// FloatEq compares a and b for (near) equality,
+// accounting for floating point inaccuracies.
+//
 // https://floating-point-gui.de/errors/comparison/
 func FloatEq(a, b float32) bool {
 	if a == b {
@@ -82,6 +104,12 @@ func FloatEq(a, b float32) bool {
 	return diff/(Abs(a)+Abs(b)) < epsilon
 }
 
+// Lerp computes the linear interpolation of a and b modulated by t.
 func Lerp(a, b, t float32) float32 {
 	return (1-t)*a + t*b
+}
+
+// Mod returns the floating-point remainder of x/y.
+func Mod(x, y float32) float32 {
+	return float32(math.Mod(float64(x), float64(y)))
 }
