@@ -9,11 +9,19 @@ import (
 	"github.com/askeladdk/pancake/mathx"
 )
 
+const (
+	ASTEROID = 1 << iota
+	BULLET
+	DELETED
+	EPHEMERAL
+	SPACESHIP
+)
+
 type actionCode int
 
 const (
-	actionForward actionCode = iota
-	actionTurn
+	FORWARD actionCode = iota
+	TURN
 )
 
 type action struct {
@@ -21,7 +29,7 @@ type action struct {
 	value float32
 }
 
-type brainFunc func(*entity)
+type brainFunc func(*entity, float32)
 
 type inputBrain struct {
 	actions []action
@@ -31,38 +39,41 @@ func (b *inputBrain) action(code actionCode, value float32) {
 	b.actions = append(b.actions, action{code, value})
 }
 
-func (b *inputBrain) frame(e *entity) {
+func (b *inputBrain) frame(e *entity, dt float32) {
 	for _, a := range b.actions {
 		switch a.code {
-		case actionForward:
-			acc := mathx.FromHeading(e.rot).Mul(a.value * e.thrust)
+		case FORWARD:
+			acc := mathx.FromHeading(e.rot).Mul(a.value * e.thrust * dt)
 			vel := e.vel.Add(acc)
 			if vel.Len() > e.maxv {
 				vel = vel.Unit().Mul(e.maxv)
 			}
 			e.vel = vel
-		case actionTurn:
-			e.rotv = e.turn * a.value
+		case TURN:
+			e.rotv = e.turn * a.value * dt
 		}
 	}
 	b.actions = b.actions[:0]
 }
 
 type entity struct {
-	sprite        graphics2d.Sprite // sprite
-	pos           mathx.Vec2        // position
-	vel           mathx.Vec2        // velocity
-	rot           float32           // rotation
-	rotv          float32           // rotational velocity
-	dampenv       float32           // velocity dampening
-	dampenr       float32           // rotational dampening
-	maxv          float32           // maximum velocity
-	minrotv       float32           // minimum rotational velocity
-	turn          float32           // turn rate
-	thrust        float32           // thrust speed
-	brain         brainFunc         // intelligence
-	collisionMask uint32
-	radius        float32
+	sprite   graphics2d.Sprite // sprite
+	pos      mathx.Vec2        // position
+	vel      mathx.Vec2        // velocity
+	rot      float32           // rotation
+	rotv     float32           // rotational velocity
+	dampenv  float32           // velocity dampening
+	dampenr  float32           // rotational dampening
+	maxv     float32           // maximum velocity
+	minrotv  float32           // minimum rotational velocity
+	turn     float32           // turn rate
+	thrust   float32           // thrust speed
+	brain    brainFunc         // intelligence
+	mask     uint32            // capability mask
+	radius   float32           // collision radius for COLLIDES
+	lifetime float32           // time until death in seconds, for EPHEMERAL
+	pos0     mathx.Vec2
+	rot0     float32
 }
 
 type simulation struct {
@@ -78,6 +89,7 @@ type entities struct {
 	s *simulation
 	i int
 	j int
+	a float32
 }
 
 func (es *entities) Len() int {
@@ -89,6 +101,7 @@ func (es *entities) Slice(i, j int) graphics2d.InstanceSlice {
 		s: es.s,
 		i: es.i + i,
 		j: es.i + j,
+		a: es.a,
 	}
 }
 
@@ -110,59 +123,102 @@ func (es entities) TextureRegion(i int) mathx.Aff3 {
 
 func (es entities) ModelView(i int) mathx.Aff3 {
 	e := es.at(i)
+	pos := e.pos0.Lerp(e.pos, es.a)
+	rot := mathx.Lerp(e.rot0, e.rot, es.a)
 	return mathx.
 		ScaleAff3(e.sprite.Size).
-		Rotated(e.rot).
-		Translated(e.pos)
+		Rotated(rot).
+		Translated(pos)
 }
 
-func (s *simulation) collisionTest() {
+func (s *simulation) collisionResponse(a, b *entity) {
+	if a.mask&b.mask&ASTEROID != 0 {
+		v := a.pos.Sub(b.pos).Unit()
+		a.vel = v.Mul(a.maxv * .5)
+		b.vel = v.Mul(b.maxv * .5).Neg()
+		a.rotv += mathx.Tau / 64 * (1 + 2*rand.Float32())
+		b.rotv += mathx.Tau / 64 * (1 + 2*rand.Float32())
+	} else if (a.mask|b.mask)&(ASTEROID|BULLET) == (ASTEROID | BULLET) {
+		a.mask |= DELETED
+		b.mask |= DELETED
+	}
+}
+
+func (s *simulation) collisionDetection() {
 	for i := 0; i < len(s.entities); i++ {
 		a := s.at(i)
-		if a.collisionMask == 0 {
-			continue
-		}
 		for j := i + 1; j < len(s.entities); j++ {
 			b := s.at(j)
-			if a.collisionMask&b.collisionMask != 0 {
-				c0 := mathx.Circle{a.pos, a.radius}
-				c1 := mathx.Circle{b.pos, b.radius}
-				if c0.IntersectsCircle(c1) {
-					v := a.pos.Sub(b.pos).Unit()
-					a.vel = v.Mul(a.maxv)
-					b.vel = v.Mul(b.maxv).Neg()
-					a.rotv += mathx.Tau / 64
-					b.rotv -= mathx.Tau / 64
-				}
+			c0 := mathx.Circle{a.pos, a.radius}
+			c1 := mathx.Circle{b.pos, b.radius}
+			if c0.IntersectsCircle(c1) {
+				s.collisionResponse(a, b)
 			}
 		}
 	}
 }
 
-func (s *simulation) frame() {
-	for i, e := range s.entities {
+func (s *simulation) ephemeral(deltaTime float32) {
+	for i, _ := range s.entities {
+		e := s.at(i)
+		if e.mask&EPHEMERAL != 0 {
+			e.lifetime -= deltaTime
+			if e.lifetime <= 0 {
+				e.mask |= DELETED
+			}
+		}
+	}
+}
+
+func (s *simulation) deletePass() {
+	count := len(s.entities)
+
+	for i := 0; i < count; {
+		if s.at(i).mask&DELETED != 0 {
+			count--
+			s.entities[i] = s.entities[count]
+			s.entities = s.entities[:count]
+		} else {
+			i++
+		}
+	}
+}
+
+func (s *simulation) frame(deltaTime float32) {
+	for i, _ := range s.entities {
+		e := &s.entities[i]
 		if e.brain != nil {
-			e.brain(&e)
-			s.entities[i] = e
+			e.brain(e, deltaTime)
 		}
 	}
 
-	s.collisionTest()
+	s.collisionDetection()
+	s.ephemeral(deltaTime)
+	s.deletePass()
 
 	for i, e := range s.entities {
+		e.rot0 = e.rot
+		e.pos0 = e.pos
+
+		e.pos = e.pos.Add(e.vel.Mul(deltaTime))
+
 		b := s.bounds.Expand(e.sprite.Size.Mul(0.5))
-		e.pos = e.pos.Add(e.vel).Wrap(b)
+		if !e.pos.IntersectsRectangle(b) {
+			e.pos = e.pos.Wrap(b)
+			e.pos0 = e.pos
+		}
+
 		e.vel = e.vel.Mul(e.dampenv)
 		e.rotv = mathx.Clamp(e.rotv*e.dampenr, -e.minrotv, e.minrotv)
-		e.rot = mathx.Mod(e.rot+e.rotv*e.turn, mathx.Tau)
+		e.rot = e.rot + e.rotv*e.turn
 		s.entities[i] = e
 	}
 }
 
-func (s *simulation) draw() {
+func (s *simulation) draw(alpha float32) {
 	s.shader.Begin()
 	s.shader.SetUniform("u_Projection", s.projection)
-	s.drawer.Draw(&entities{s, 0, len(s.entities)})
+	s.drawer.Draw(&entities{s, 0, len(s.entities), alpha})
 	s.shader.End()
 }
 
@@ -177,16 +233,32 @@ func (s *simulation) spawnAsteroid() {
 	}.MulVec2(s.bounds.Max)
 
 	s.entities = append(s.entities, entity{
-		sprite:        s.sprites[2],
-		pos:           pos,
-		turn:          mathx.Tau / 64 * (2*rand.Float32() - 1),
-		maxv:          1,
-		rotv:          1,
-		minrotv:       rand.Float32(),
-		dampenr:       .99,
-		dampenv:       1,
-		vel:           mathx.FromHeading(mathx.Tau * rand.Float32()),
-		collisionMask: 1,
-		radius:        28,
+		sprite:  s.sprites[2],
+		pos:     pos,
+		turn:    mathx.Tau / 64 * (2*rand.Float32() - 1),
+		maxv:    100,
+		rotv:    1,
+		minrotv: rand.Float32(),
+		dampenr: 1,
+		dampenv: 1,
+		vel:     mathx.FromHeading(mathx.Tau * rand.Float32()).Mul(100),
+		mask:    ASTEROID,
+		radius:  28,
+		pos0:    pos,
+	})
+}
+
+func (s *simulation) spawnBullet(pos mathx.Vec2, rot float32) {
+	s.entities = append(s.entities, entity{
+		sprite:   s.sprites[3],
+		pos:      pos,
+		dampenv:  1.01,
+		rot:      rot,
+		vel:      mathx.FromHeading(rot).Mul(200),
+		mask:     EPHEMERAL | BULLET,
+		radius:   4,
+		lifetime: 0.6,
+		pos0:     pos,
+		rot0:     rot,
 	})
 }
