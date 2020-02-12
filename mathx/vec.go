@@ -142,3 +142,10 @@ func (u Vec2) Wrap(r Rectangle) Vec2 {
 	u[1] = Wrap(u[1], r.Min[1], r.Max[1])
 	return u
 }
+
+// Project computes the orthogonal projection of u
+// onto a straight line parallel to v.
+func (u Vec2) Project(v Vec2) Vec2 {
+	w := v.Unit()
+	return w.Mul(u.Dot(w))
+}
