@@ -26,22 +26,21 @@ type Mesh struct {
 	DrawMode gl.Enum
 }
 
-type InstanceSlice interface {
+type Batch interface {
 	Len() int
-	Slice(i, j int) InstanceSlice
 	Color(i int) color.NRGBA
-	Texture(i int) *graphics.Texture
+	Texture() *graphics.Texture
 	TextureRegion(i int) mathx.Aff3
 	ModelView(i int) mathx.Aff3
 }
 
-func MakeVertices(mesh Mesh, slice InstanceSlice, vertices []Vertex) []Vertex {
+func MakeVertices(mesh Mesh, batch Batch, vertices []Vertex) []Vertex {
 	tmpv := make([]Vertex, len(mesh.Vertices))
 
-	for i := 0; i < slice.Len(); i++ {
-		modelview := slice.ModelView(i)
-		region := slice.TextureRegion(i)
-		rgba := slice.Color(i)
+	for i := 0; i < batch.Len(); i++ {
+		modelview := batch.ModelView(i)
+		region := batch.TextureRegion(i)
+		rgba := batch.Color(i)
 		for m := 0; m < len(tmpv); m++ {
 			v := mesh.Vertices[m]
 			tmpv[m] = Vertex{
@@ -79,31 +78,39 @@ func NewDrawer(maxinstances int, mesh Mesh) *Drawer {
 	}
 }
 
-func (d *Drawer) Draw(slice InstanceSlice) {
-	d.vslice.Begin()
-
+func (d *Drawer) DrawBatches(batches []Batch) {
 	var verts []Vertex
 
-	for i := 0; i < slice.Len(); {
-		texture := slice.Texture(i)
+	d.vslice.Begin()
 
-		j := i + 1
+	for i := 0; i < len(batches); {
+		verts = MakeVertices(d.mesh, batches[i], verts[:0])
+		texture := batches[i].Texture()
 
-		for ; j < slice.Len(); j++ {
-			if slice.Texture(j) != texture {
+		for i = i + 1; i < len(batches); i++ {
+			if batches[i].Texture() != texture {
 				break
 			}
-		}
 
-		verts = MakeVertices(d.mesh, slice.Slice(i, j), verts[:0])
+			verts = MakeVertices(d.mesh, batches[i], verts)
+		}
 
 		texture.Begin()
 		d.drawVertices(d.mesh.DrawMode, verts)
 		texture.End()
-
-		i = j
 	}
 
+	d.vslice.End()
+}
+
+func (d *Drawer) DrawBatch(batch Batch) {
+	verts := MakeVertices(d.mesh, batch, nil)
+	texture := batch.Texture()
+
+	d.vslice.Begin()
+	texture.Begin()
+	d.drawVertices(d.mesh.DrawMode, verts)
+	texture.End()
 	d.vslice.End()
 }
 

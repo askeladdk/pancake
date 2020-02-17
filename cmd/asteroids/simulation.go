@@ -96,15 +96,6 @@ func (es *entities) Len() int {
 	return es.j - es.i
 }
 
-func (es *entities) Slice(i, j int) graphics2d.InstanceSlice {
-	return &entities{
-		s: es.s,
-		i: es.i + i,
-		j: es.i + j,
-		a: es.a,
-	}
-}
-
 func (es *entities) Color(i int) color.NRGBA {
 	return color.NRGBA{0xff, 0xff, 0xff, 0xff}
 }
@@ -113,8 +104,8 @@ func (es *entities) at(i int) entity {
 	return es.s.entities[es.i+i]
 }
 
-func (es *entities) Texture(i int) *graphics.Texture {
-	return es.at(i).sprite.Texture
+func (es *entities) Texture() *graphics.Texture {
+	return es.at(0).sprite.Texture
 }
 
 func (es entities) TextureRegion(i int) mathx.Aff3 {
@@ -218,7 +209,13 @@ func (s *simulation) frame(deltaTime float32) {
 func (s *simulation) draw(alpha float32) {
 	s.shader.Begin()
 	s.shader.SetUniform("u_Projection", s.projection)
-	s.drawer.Draw(&entities{s, 0, len(s.entities), alpha})
+
+	batches := []graphics2d.Batch{
+		&entities{s, 0, 1, alpha},
+		&entities{s, 1, len(s.entities), alpha},
+	}
+
+	s.drawer.DrawBatches(batches)
 	s.shader.End()
 }
 
