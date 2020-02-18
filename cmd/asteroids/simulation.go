@@ -77,12 +77,9 @@ type entity struct {
 }
 
 type simulation struct {
-	sprites    []graphics2d.Sprite
-	bounds     mathx.Rectangle
-	entities   []entity
-	drawer     *graphics2d.Drawer
-	shader     *graphics.ShaderProgram
-	projection mathx.Mat4
+	sprites  []graphics2d.Sprite
+	bounds   mathx.Rectangle
+	entities []entity
 }
 
 type entities struct {
@@ -96,7 +93,7 @@ func (es *entities) Len() int {
 	return es.j - es.i
 }
 
-func (es *entities) Color(i int) color.NRGBA {
+func (es *entities) ColorAt(i int) color.NRGBA {
 	return color.NRGBA{0xff, 0xff, 0xff, 0xff}
 }
 
@@ -108,11 +105,11 @@ func (es *entities) Texture() *graphics.Texture {
 	return es.at(0).sprite.Texture
 }
 
-func (es entities) TextureRegion(i int) mathx.Aff3 {
+func (es entities) TextureRegionAt(i int) mathx.Aff3 {
 	return es.at(i).sprite.Region
 }
 
-func (es entities) ModelView(i int) mathx.Aff3 {
+func (es entities) ModelViewAt(i int) mathx.Aff3 {
 	e := es.at(i)
 	pos := e.pos0.Lerp(e.pos, es.a)
 	rot := mathx.Lerp(e.rot0, e.rot, es.a)
@@ -120,6 +117,10 @@ func (es entities) ModelView(i int) mathx.Aff3 {
 		ScaleAff3(e.sprite.Size).
 		Rotated(rot).
 		Translated(pos)
+}
+
+func (es entities) PivotAt(i int) mathx.Vec2 {
+	return mathx.Vec2{}
 }
 
 func (s *simulation) collisionResponse(a, b *entity) {
@@ -206,17 +207,22 @@ func (s *simulation) frame(deltaTime float32) {
 	}
 }
 
-func (s *simulation) draw(alpha float32) {
-	s.shader.Begin()
-	s.shader.SetUniform("u_Projection", s.projection)
+func (s *simulation) batches(alpha float32) []graphics2d.Batch {
+	var batches []graphics2d.Batch
 
-	batches := []graphics2d.Batch{
-		&entities{s, 0, 1, alpha},
-		&entities{s, 1, len(s.entities), alpha},
+	for i := 0; i < len(s.entities); {
+		spr := s.entities[i].sprite
+		j := i + 1
+		for ; j < len(s.entities); j++ {
+			if s.entities[j].sprite != spr {
+				break
+			}
+		}
+		batches = append(batches, &entities{s, i, j, alpha})
+		i = j
 	}
 
-	s.drawer.DrawBatches(batches)
-	s.shader.End()
+	return batches
 }
 
 func (s *simulation) at(i int) *entity {

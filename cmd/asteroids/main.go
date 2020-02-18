@@ -5,9 +5,14 @@ import (
 	"image"
 	"os"
 
+	"image/color"
 	_ "image/png"
 
 	"github.com/askeladdk/pancake/graphics2d"
+	"github.com/askeladdk/pancake/text"
+	"github.com/golang/freetype/truetype"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/gofont/goregular"
 
 	"github.com/askeladdk/pancake/graphics"
 	gl "github.com/askeladdk/pancake/graphics/opengl"
@@ -75,6 +80,20 @@ func run(app pancake.App) error {
 
 	midscreen := mathx.FromPoint(app.Bounds().Size().Div(2))
 
+	drawer := graphics2d.NewDrawer(1024, graphics2d.Quad)
+	shader := graphics2d.DefaultShader()
+
+	// load the font
+	ttf, _ := truetype.Parse(goregular.TTF)
+	face := truetype.NewFace(ttf, &truetype.Options{
+		Size:    16,
+		DPI:     72,
+		Hinting: font.HintingFull,
+	})
+	thefont := text.NewFontFromFace(face, text.ASCII)
+
+	fpstext := text.NewText(thefont)
+
 	simulation := simulation{
 		sprites: []graphics2d.Sprite{
 			background,
@@ -108,9 +127,6 @@ func run(app pancake.App) error {
 				radius:  14,
 			},
 		},
-		drawer:     graphics2d.NewDrawer(1024, graphics2d.Quad),
-		shader:     graphics2d.DefaultShader(),
-		projection: projection,
 	}
 
 	var keys uint32
@@ -157,13 +173,25 @@ func run(app pancake.App) error {
 			}
 
 			simulation.frame(float32(ev.DeltaTime))
-			app.SetTitle(fmt.Sprintf("Asteroids - %d FPS", app.FrameRate()))
+
+			fpstext.Clear()
+			fpstext.Color = color.NRGBA{255, 255, 255, 255}
+			fmt.Fprintf(fpstext, "FPS: ")
+			fpstext.Color = color.NRGBA{255, 0, 0, 255}
+			fmt.Fprintf(fpstext, "%d", app.FrameRate())
 		case pancake.DrawEvent:
+			var batches []graphics2d.Batch
+			batches = append(batches, simulation.batches(float32(ev.Alpha))...)
+			batches = append(batches, fpstext)
+
 			app.Begin()
 			gl.ClearColor(0, 0, 1, 0)
 			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-			simulation.draw(float32(ev.Alpha))
+			shader.Begin()
+			shader.SetUniform("u_Projection", projection)
+			drawer.DrawBatches(batches)
+			shader.End()
 
 			app.End()
 		}
