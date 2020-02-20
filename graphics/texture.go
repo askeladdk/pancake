@@ -47,8 +47,8 @@ func (tex *Texture) End() {
 	tex.EndAt(0)
 }
 
-func (tex *Texture) Bounds() image.Rectangle {
-	return image.Rectangle{image.Point{}, tex.size}
+func (tex *Texture) Size() image.Point {
+	return tex.size
 }
 
 func (tex *Texture) ColorFormat() ColorFormat {

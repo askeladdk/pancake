@@ -28,7 +28,7 @@ func (fbo *Framebuffer) End() {
 }
 
 func (fbo *Framebuffer) Bounds() image.Rectangle {
-	return fbo.color.Bounds()
+	return image.Rectangle{image.Point{}, fbo.color.Size()}
 }
 
 func (fbo *Framebuffer) Color() *Texture {

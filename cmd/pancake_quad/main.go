@@ -117,8 +117,8 @@ func run(app pancake.App) error {
 				// setup modelview matrix
 				// scale to the size of the texture
 				// and translate to centre at the frame
-				texsz := texture.Bounds().Size()
-				framesz := app.Bounds().Size()
+				texsz := texture.Size()
+				framesz := app.Resolution()
 				modelview := mathx.
 					ScaleAff3(mathx.FromPoint(texsz)).
 					Translated(mathx.FromPoint(framesz).Mul(0.5))

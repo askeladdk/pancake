@@ -66,7 +66,7 @@ func makeWindow(opt Options) (*glfw.Window, error) {
 }
 
 type App interface {
-	Bounds() image.Rectangle
+	Resolution() image.Point
 	Framebuffer() *graphics.Framebuffer
 	FrameRate() int
 	SetTitle(string)
@@ -189,8 +189,8 @@ func (app *app) End() {
 		gl.Enum(gl.COLOR_BUFFER_BIT), graphics.FilterLinear)
 }
 
-func (app *app) Bounds() image.Rectangle {
-	return image.Rectangle{image.Point{}, app.resolution}
+func (app *app) Resolution() image.Point {
+	return app.resolution
 }
 
 func (app *app) charCallback(_ *glfw.Window, char rune) {
