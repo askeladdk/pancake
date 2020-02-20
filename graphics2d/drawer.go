@@ -64,6 +64,7 @@ func MakeVertices(mesh Mesh, batch Batch, vertices []Vertex) []Vertex {
 }
 
 type Drawer struct {
+	verts   []Vertex
 	vbuffer *graphics.Buffer
 	vslice  *graphics.VertexSlice
 	mesh    Mesh
@@ -79,13 +80,19 @@ func NewDrawer(maxinstances int, mesh Mesh) *Drawer {
 	}
 }
 
-func (d *Drawer) DrawBatches(batches []Batch) {
-	var verts []Vertex
+func (d *Drawer) Draw(batches ...Batch) {
+	if len(batches) > 1 {
+		d.drawBatches(batches)
+	} else if len(batches) == 1 {
+		d.drawBatch(batches[0])
+	}
+}
 
+func (d *Drawer) drawBatches(batches []Batch) {
 	d.vslice.Begin()
 
 	for i := 0; i < len(batches); {
-		verts = MakeVertices(d.mesh, batches[i], verts[:0])
+		d.verts = MakeVertices(d.mesh, batches[i], d.verts[:0])
 		texture := batches[i].Texture()
 
 		for i = i + 1; i < len(batches); i++ {
@@ -93,24 +100,24 @@ func (d *Drawer) DrawBatches(batches []Batch) {
 				break
 			}
 
-			verts = MakeVertices(d.mesh, batches[i], verts)
+			d.verts = MakeVertices(d.mesh, batches[i], d.verts)
 		}
 
 		texture.Begin()
-		d.drawVertices(d.mesh.DrawMode, verts)
+		d.drawVertices(d.mesh.DrawMode, d.verts)
 		texture.End()
 	}
 
 	d.vslice.End()
 }
 
-func (d *Drawer) DrawBatch(batch Batch) {
-	verts := MakeVertices(d.mesh, batch, nil)
+func (d *Drawer) drawBatch(batch Batch) {
+	d.verts = MakeVertices(d.mesh, batch, d.verts[:0])
 	texture := batch.Texture()
 
 	d.vslice.Begin()
 	texture.Begin()
-	d.drawVertices(d.mesh.DrawMode, verts)
+	d.drawVertices(d.mesh.DrawMode, d.verts)
 	texture.End()
 	d.vslice.End()
 }
