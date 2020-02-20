@@ -6,6 +6,8 @@ import (
 	"image/draw"
 	"runtime"
 
+	"github.com/askeladdk/pancake/mathx"
+
 	gl "github.com/askeladdk/pancake/graphics/opengl"
 )
 
@@ -95,6 +97,26 @@ func (tex *Texture) Pixels(pixels []byte) []byte {
 	panicError()
 
 	return pixels
+}
+
+func (tex *Texture) Texture() *Texture {
+	return tex
+}
+
+func (tex *Texture) TextureRegion() TextureRegion {
+	return TextureRegion{1, 1, 0, 0}
+}
+
+func (tex *Texture) Scale() mathx.Vec2 {
+	return mathx.FromPoint(tex.size)
+}
+
+func (tex *Texture) SubImage(region image.Rectangle) Image {
+	return &subTexture{
+		texture: tex,
+		region:  NewTextureRegion(tex.Size(), region),
+		size:    mathx.FromPoint(region.Size()),
+	}
 }
 
 func (tex *Texture) len() int {

@@ -6,7 +6,6 @@ import (
 	"sort"
 	"unicode"
 
-	"github.com/askeladdk/pancake/graphics2d"
 	"github.com/askeladdk/pancake/mathx"
 
 	"github.com/askeladdk/pancake/graphics"
@@ -47,7 +46,7 @@ type Font interface {
 }
 
 type Glyph struct {
-	Region  mathx.Aff3
+	Region  graphics.TextureRegion
 	Scale   mathx.Vec2
 	Advance float32
 }
@@ -95,13 +94,8 @@ func NewFontFromFace(face font.Face, runeSets ...[]rune) Font {
 				image.Point{x + w, h},
 			}
 
-			sx, sy, tx, ty := graphics2d.TextureRegion(imageSize, region)
 			mapping[r] = Glyph{
-				Region: mathx.Aff3{
-					sx, 0.,
-					0., sy,
-					tx, ty,
-				},
+				Region: graphics.NewTextureRegion(imageSize, region),
 				Scale: mathx.Vec2{
 					float32(w),
 					float32(h),

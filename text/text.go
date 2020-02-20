@@ -17,7 +17,7 @@ type Text struct {
 	TabWidth   float32
 
 	modelview []mathx.Aff3
-	region    []mathx.Aff3
+	region    []graphics.TextureRegion
 	colors    []color.NRGBA
 	buffer    []byte
 	font      Font
@@ -107,7 +107,7 @@ func (t *Text) Texture() *graphics.Texture {
 	return t.font.Texture()
 }
 
-func (t *Text) TextureRegionAt(i int) mathx.Aff3 {
+func (t *Text) TextureRegionAt(i int) graphics.TextureRegion {
 	return t.region[i]
 }
 
