@@ -62,13 +62,6 @@ func ptrOffset(offset int) unsafe.Pointer {
 // The implementation is taken from
 // https://github.com/golang/sys/blob/86b910548bc16777f40503131aa424ae0a092199/unix/syscall_unix.go#L116-L124
 func ptrToSlice(ptr unsafe.Pointer, length int) []byte {
-	// Slice memory layout
-	var sl = struct {
-		addr uintptr
-		len  int
-		cap  int
-	}{uintptr(ptr), length, length}
-
-	// Use unsafe to turn sl into a []byte.
+	sl := reflect.SliceHeader{uintptr(ptr), length, length}
 	return *(*[]byte)(unsafe.Pointer(&sl))
 }
