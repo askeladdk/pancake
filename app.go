@@ -66,6 +66,7 @@ func makeWindow(opt Options) (*glfw.Window, error) {
 }
 
 type App interface {
+	Scissor(r image.Rectangle) graphics.Scissor
 	Resolution() image.Point
 	Framebuffer() *graphics.Framebuffer
 	FrameRate() int
@@ -86,6 +87,15 @@ type app struct {
 	deltaTime     float64
 	frameRate     int
 	cursorEntered bool
+}
+
+func (app *app) Scissor(r image.Rectangle) graphics.Scissor {
+	vpsz := app.viewport.Size()
+	scale := vpsz.X / app.resolution.X
+	r.Min = r.Min.Mul(scale)
+	r.Max = r.Max.Mul(scale)
+	r.Min.Y, r.Max.Y = vpsz.Y-r.Max.Y, vpsz.Y-r.Min.Y
+	return graphics.Scissor(r)
 }
 
 func (app *app) Framebuffer() *graphics.Framebuffer {
