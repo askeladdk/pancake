@@ -61,7 +61,7 @@ func (ss *scissorStack) setScissor(scissor Scissor) {
 }
 
 func (ss *scissorStack) push(next Scissor) {
-	ss.stack = append(ss.stack, next)
+	ss.stack = append(ss.stack, ss.current)
 	ss.setScissor(next)
 }
 
