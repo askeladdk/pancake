@@ -18,8 +18,8 @@ func ClampRectangle(bounds, r image.Rectangle) image.Rectangle {
 	size := r.Size()
 	size.X = ClampInt(size.X, 0, boundsSize.X)
 	size.Y = ClampInt(size.Y, 0, boundsSize.Y)
-	r.Min.X = ClampInt(r.Min.X, bounds.Min.X, boundsSize.X-size.X)
-	r.Min.Y = ClampInt(r.Min.Y, bounds.Min.Y, boundsSize.Y-size.Y)
+	r.Min.X = ClampInt(r.Min.X, bounds.Min.X, bounds.Max.X-size.X)
+	r.Min.Y = ClampInt(r.Min.Y, bounds.Min.Y, bounds.Max.Y-size.Y)
 	r.Max = r.Min.Add(size)
 	return r
 }
