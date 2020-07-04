@@ -1,5 +1,7 @@
 package tilemap
 
+import "image"
+
 // AutoTiler implements the AutoTile() method.
 type AutoTiler interface {
 	// AutoTile maps a tile neighbour bitset to a TileID.
@@ -7,10 +9,10 @@ type AutoTiler interface {
 }
 
 // AutoTile modifies the TileMap by autotiling all tiles inside the given area.
-func AutoTile(tileMap TileMap, x0, x1, y0, y1 int) {
+func AutoTile(tileMap TileMap, r image.Rectangle) {
 	tileSet := tileMap.TileSet()
-	for yc := y0; yc < y1; yc++ {
-		for xc := x0; xc < x1; xc++ {
+	for yc := r.Min.Y; yc < r.Max.Y; yc++ {
+		for xc := r.Min.X; xc < r.Max.X; xc++ {
 			tileId := tileMap.TileAt(xc, yc)
 			if base, autoTiler, ok := tileSet.IsAutoTile(tileId); ok {
 				bitset := tileMap.AutoTileBitSet(xc, yc, func(xn, yn int) bool {
