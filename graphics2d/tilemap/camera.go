@@ -33,7 +33,7 @@ func (b *Camera) OnScreenArea() image.Rectangle {
 
 // Pan translates the camera viewport by delta pixels.
 func (b *Camera) Pan(dp image.Point) {
-	b.Viewport = mathx.ClampRectangle(b.TileMap.Metrics().Bounds(), b.Viewport.Add(dp))
+	b.Viewport = mathx.ClampRectangle(b.TileMap.Bounds(), b.Viewport.Add(dp))
 }
 
 // Update the batch. Call it whenever panning the camera or when the TileMap changes.
@@ -42,7 +42,7 @@ func (b *Camera) Update() {
 	b.regions = b.regions[:0]
 	b.modelviews = b.modelviews[:0]
 	b.colors = b.colors[:0]
-	b.TileMap.Metrics().RangeTilesInViewport(b.Viewport, func(x, y int, modelview mathx.Aff3) {
+	b.TileMap.RangeTilesInViewport(b.Viewport, func(x, y int, modelview mathx.Aff3) {
 		b.regions = append(b.regions, tileset.TileRegion(b.TileMap.TileAt(x, y)))
 		b.modelviews = append(b.modelviews, modelview.Translated(b.Pos))
 		b.colors = append(b.colors, b.TileMap.TileColorAt(x, y))

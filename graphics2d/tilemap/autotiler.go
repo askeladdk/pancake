@@ -13,7 +13,7 @@ func AutoTile(tileMap TileMap, x0, x1, y0, y1 int) {
 		for xc := x0; xc < x1; xc++ {
 			tileId := tileMap.TileAt(xc, yc)
 			if base, autoTiler, ok := tileSet.IsAutoTile(tileId); ok {
-				bitset := tileMap.Metrics().AutoTileBitSet(xc, yc, func(xn, yn int) bool {
+				bitset := tileMap.AutoTileBitSet(xc, yc, func(xn, yn int) bool {
 					return !tileSet.SameAutoTile(tileId, tileMap.TileAt(xn, yn))
 				})
 				tileMap.SetTileAt(xc, yc, base+autoTiler.AutoTile(bitset))

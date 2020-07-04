@@ -8,30 +8,29 @@ import (
 
 // Metrics provides functionality based on the dimensions of a TileMap.
 type Metrics struct {
-	// Size of cell in pixels. Cells are assumed to be square.
-	PixelsPerCell int
-	// Width in cells.
-	Width int
-	// Height in cells.
-	Height int
+	// Cell size measured in pixels. Cells are always square.
+	CellFormat int
+	// Width of the map measured in cells.
+	CellWidth int
+	// Height of the map measured in cells.
+	CellHeight int
 }
 
 func (m Metrics) leptonFromPixel(p int) Lepton {
-	return Lepton((p*0x10000 + m.PixelsPerCell/2) / m.PixelsPerCell)
+	return Lepton((p*0x10000 + m.CellFormat/2) / m.CellFormat)
 }
 
 func (m Metrics) pixelFromLepton(lp Lepton) int {
-	return (int(lp)*m.PixelsPerCell + 0x8000) / 0x10000
+	return (int(lp)*m.CellFormat + 0x8000) / 0x10000
 }
 
-// Bounds returns the bounds of the grid in pixels.
 func (m Metrics) Bounds() image.Rectangle {
-	return image.Rect(0, 0, m.Width*m.PixelsPerCell, m.Height*m.PixelsPerCell)
+	return image.Rect(0, 0, m.CellWidth*m.CellFormat, m.CellHeight*m.CellFormat)
 }
 
 // Inside tests if the cell position (x, y) is inside the bounds.
 func (m Metrics) Inside(x, y int) bool {
-	return x >= 0 && y >= 0 && x < m.Width && y < m.Height
+	return x >= 0 && y >= 0 && x < m.CellWidth && y < m.CellHeight
 }
 
 // PixelToCoordinate converts a pixel to a Coordinate.
@@ -47,8 +46,6 @@ func (m Metrics) CoordinateToPixel(c Coordinate) image.Point {
 	return image.Pt(m.pixelFromLepton(x), m.pixelFromLepton(y))
 }
 
-// AutoTileBitSet computes a bitset by comparing the centre tile
-// with all eight neighbouring tiles using a test function.
 func (m Metrics) AutoTileBitSet(cx, cy int, testFunc func(x, y int) bool) uint8 {
 	var bitset uint8
 
@@ -74,10 +71,8 @@ func (m Metrics) AutoTileBitSet(cx, cy int, testFunc func(x, y int) bool) uint8 
 	return bitset
 }
 
-// RangeTilesInViewport iterates over all tiles in the viewport
-// and returns their positions and modelviews.
 func (m Metrics) RangeTilesInViewport(viewport image.Rectangle, fn func(x, y int, modelview mathx.Aff3)) {
-	tileSize := mathx.Vec2{float32(m.PixelsPerCell), float32(m.PixelsPerCell)}
+	tileSize := mathx.Vec2{float32(m.CellFormat), float32(m.CellFormat)}
 	scale := mathx.ScaleAff3(tileSize)
 	x0, y0, x1, y1, xofs, yofs := m.drawExtents(viewport)
 	pixel := mathx.Vec2{float32(xofs), float32(yofs)}
@@ -95,14 +90,14 @@ func (m Metrics) RangeTilesInViewport(viewport image.Rectangle, fn func(x, y int
 }
 
 func (m Metrics) drawExtents(viewport image.Rectangle) (x0, y0, x1, y1, xofs, yofs int) {
-	xofs = -(viewport.Min.X % m.PixelsPerCell)
-	yofs = -(viewport.Min.Y % m.PixelsPerCell)
-	xedge := viewport.Max.X % m.PixelsPerCell
-	yedge := viewport.Max.Y % m.PixelsPerCell
-	x0 = viewport.Min.X / m.PixelsPerCell
-	y0 = viewport.Min.Y / m.PixelsPerCell
-	x1 = viewport.Max.X / m.PixelsPerCell
-	y1 = viewport.Max.Y / m.PixelsPerCell
+	xofs = -(viewport.Min.X % m.CellFormat)
+	yofs = -(viewport.Min.Y % m.CellFormat)
+	xedge := viewport.Max.X % m.CellFormat
+	yedge := viewport.Max.Y % m.CellFormat
+	x0 = viewport.Min.X / m.CellFormat
+	y0 = viewport.Min.Y / m.CellFormat
+	x1 = viewport.Max.X / m.CellFormat
+	y1 = viewport.Max.Y / m.CellFormat
 
 	if -xofs+xedge != 0 {
 		x1 += 1
@@ -112,12 +107,12 @@ func (m Metrics) drawExtents(viewport image.Rectangle) (x0, y0, x1, y1, xofs, yo
 		y1 += 1
 	}
 
-	if x1 > m.Width {
-		x1 = m.Width
+	if x1 > m.CellWidth {
+		x1 = m.CellWidth
 	}
 
-	if y1 > m.Height {
-		y1 = m.Height
+	if y1 > m.CellHeight {
+		y1 = m.CellHeight
 	}
 
 	return

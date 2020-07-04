@@ -1,9 +1,11 @@
 package tilemap
 
 import (
+	"image"
 	"image/color"
 
 	"github.com/askeladdk/pancake/graphics"
+	"github.com/askeladdk/pancake/mathx"
 )
 
 // TileID identifies a specific tile in a TileSet.
@@ -38,6 +40,14 @@ type TileMap interface {
 	// TileSet returns the TileSet.
 	TileSet() TileSet
 
-	// Metrics returns the metrics.
-	Metrics() Metrics
+	// Bounds returns the bounds of the TileMap measured in pixels.
+	Bounds() image.Rectangle
+
+	// AutoTileBitSet computes the bitset of a cell based on its eight neighbours.
+	// The test function tests whether a neighbouring cell is of the same type as the centre cell.
+	AutoTileBitSet(cx, cy int, testFunc func(x, y int) bool) uint8
+
+	// RangeTilesInViewport iterates over all tiles in the viewport
+	// and returns their positions and modelviews.
+	RangeTilesInViewport(viewport image.Rectangle, fn func(x, y int, modelview mathx.Aff3))
 }
