@@ -9,7 +9,7 @@ import (
 )
 
 // TileID identifies a specific tile in a TileSet.
-type TileID int
+type TileID uint32
 
 // TileSet is a list of images that share a common underlying texture.
 type TileSet interface {
