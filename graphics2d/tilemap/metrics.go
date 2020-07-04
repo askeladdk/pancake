@@ -14,6 +14,8 @@ type Metrics struct {
 	CellWidth int
 	// Height of the map measured in cells.
 	CellHeight int
+	// Bounds of the visible area of the map measured in cells.
+	CellBounds image.Rectangle
 }
 
 func (m Metrics) leptonFromPixel(p int) Lepton {
@@ -25,12 +27,10 @@ func (m Metrics) pixelFromLepton(lp Lepton) int {
 }
 
 func (m Metrics) Bounds() image.Rectangle {
-	return image.Rect(0, 0, m.CellWidth*m.CellFormat, m.CellHeight*m.CellFormat)
-}
-
-// Inside tests if the cell position (x, y) is inside the bounds.
-func (m Metrics) Inside(x, y int) bool {
-	return x >= 0 && y >= 0 && x < m.CellWidth && y < m.CellHeight
+	return image.Rectangle{
+		Min: m.CellBounds.Min.Mul(m.CellFormat),
+		Max: m.CellBounds.Max.Mul(m.CellFormat),
+	}
 }
 
 // PixelToCoordinate converts a pixel to a Coordinate.
@@ -63,7 +63,7 @@ func (m Metrics) AutoTileBitSet(cx, cy int, testFunc func(x, y int) bool) uint8 
 		{X: -1, Y: +0}, // W
 	} {
 		x1, y1 := cx+offset.X, cy+offset.Y
-		if m.Inside(x1, y1) && testFunc(x1, y1) {
+		if testFunc(x1, y1) {
 			bitset |= 1 << i
 		}
 	}
