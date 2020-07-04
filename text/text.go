@@ -99,7 +99,7 @@ func (t *Text) Len() int {
 	return len(t.modelview)
 }
 
-func (t *Text) ColorAt(i int) color.NRGBA {
+func (t *Text) TintColorAt(i int) color.NRGBA {
 	return t.colors[i]
 }
 

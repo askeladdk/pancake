@@ -34,8 +34,8 @@ type TileMap interface {
 	// SetTileAt sets the TileID at a grid position.
 	SetTileAt(x, y int, tileId TileID)
 
-	// TileColorAt gets the color of a tile at a grid position.
-	TileColorAt(x, y int) color.NRGBA
+	// TintColorAt reports the tint color of a tile at a grid position.
+	TintColorAt(x, y int) color.NRGBA
 
 	// TileSet returns the TileSet.
 	TileSet() TileSet

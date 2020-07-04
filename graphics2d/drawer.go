@@ -28,7 +28,7 @@ type Mesh struct {
 
 type Batch interface {
 	Len() int
-	ColorAt(i int) color.NRGBA
+	TintColorAt(i int) color.NRGBA
 	Texture() *graphics.Texture
 	TextureRegionAt(i int) graphics.TextureRegion
 	ModelViewAt(i int) mathx.Aff3
@@ -41,7 +41,7 @@ func MakeVertices(mesh Mesh, batch Batch, vertices []Vertex) []Vertex {
 	for i := 0; i < batch.Len(); i++ {
 		modelview := batch.ModelViewAt(i)
 		region := batch.TextureRegionAt(i).Aff3()
-		rgba := batch.ColorAt(i)
+		rgba := batch.TintColorAt(i)
 		pivot := batch.PivotAt(i)
 		for m, v := range mesh.Vertices {
 			tmpv[m] = Vertex{

@@ -45,7 +45,7 @@ func (b *Camera) Update() {
 	b.TileMap.RangeTilesInViewport(b.Viewport, func(x, y int, modelview mathx.Aff3) {
 		b.regions = append(b.regions, tileset.TileRegion(b.TileMap.TileAt(x, y)))
 		b.modelviews = append(b.modelviews, modelview.Translated(b.Pos))
-		b.colors = append(b.colors, b.TileMap.TileColorAt(x, y))
+		b.colors = append(b.colors, b.TileMap.TintColorAt(x, y))
 	})
 }
 
@@ -59,8 +59,8 @@ func (b *Camera) Texture() *graphics.Texture {
 	return b.TileMap.TileSet().Texture()
 }
 
-// ColorAt implements graphics2d.Batch.
-func (b *Camera) ColorAt(i int) color.NRGBA {
+// TintColorAt implements graphics2d.Batch.
+func (b *Camera) TintColorAt(i int) color.NRGBA {
 	return b.colors[i]
 }
 
