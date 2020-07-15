@@ -18,32 +18,11 @@ type Metrics struct {
 	CellBounds image.Rectangle
 }
 
-func (m Metrics) leptonFromPixel(p int) Lepton {
-	return Lepton((p*0x10000 + m.CellFormat/2) / m.CellFormat)
-}
-
-func (m Metrics) pixelFromLepton(lp Lepton) int {
-	return (int(lp)*m.CellFormat + 0x8000) / 0x10000
-}
-
 func (m Metrics) Bounds() image.Rectangle {
 	return image.Rectangle{
 		Min: m.CellBounds.Min.Mul(m.CellFormat),
 		Max: m.CellBounds.Max.Mul(m.CellFormat),
 	}
-}
-
-// PixelToCoordinate converts a pixel to a Coordinate.
-func (m Metrics) PixelToCoordinate(pixel image.Point) Coordinate {
-	x := m.leptonFromPixel(pixel.X)
-	y := m.leptonFromPixel(pixel.Y)
-	return Coord(x, y)
-}
-
-// CoordinateToPixel converts a Coordinate to a pixel.
-func (m Metrics) CoordinateToPixel(c Coordinate) image.Point {
-	x, y := c.xy()
-	return image.Pt(m.pixelFromLepton(x), m.pixelFromLepton(y))
 }
 
 func (m Metrics) AutoTileBitSet(cx, cy int, testFunc func(x, y int) bool) uint8 {
