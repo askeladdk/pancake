@@ -120,9 +120,3 @@ func NewVertexSlice(vbo *Buffer) *VertexSlice {
 
 	return vao.slice(0, vbo.Len())
 }
-
-type Drawer interface {
-	Begin()
-	End()
-	Draw(mode gl.Enum)
-}
