@@ -31,6 +31,17 @@ func (b *Camera) OnScreenArea() image.Rectangle {
 	return b.Viewport.Sub(b.Viewport.Min).Add(image.Pt(int(x), int(y)))
 }
 
+// WorldToScreen converts a pixel in the world coordinates to screen coordinates.
+func (b *Camera) WorldToScreen(pt image.Point) mathx.Vec2 {
+	return mathx.FromPoint(pt.Sub(b.Viewport.Min)).Add(b.Pos)
+}
+
+// ScreenToWorld converts a pixel in screen coordinates to world coordinates.
+func (b *Camera) ScreenToWorld(v mathx.Vec2) image.Point {
+	v = v.Sub(b.Pos).Add(mathx.FromPoint(b.Viewport.Min))
+	return image.Pt(int(v[0]), int(v[1]))
+}
+
 // Pan translates the camera viewport by delta pixels.
 func (b *Camera) Pan(dp image.Point) {
 	b.Viewport = mathx.ClampRectangle(b.TileMap.Bounds(), b.Viewport.Add(dp))
