@@ -29,13 +29,13 @@ type TileSet interface {
 // TileMap is a two-dimensional grid of tiles.
 type TileMap interface {
 	// TileAt returns the TileID at a grid position.
-	TileAt(x, y int) TileID
+	TileAt(cell Coordinate) TileID
 
 	// SetTileAt sets the TileID at a grid position.
-	SetTileAt(x, y int, tileId TileID)
+	SetTileAt(cell Coordinate, tileId TileID)
 
 	// TintColorAt reports the tint color of a tile at a grid position.
-	TintColorAt(x, y int) color.NRGBA
+	TintColorAt(cell Coordinate) color.NRGBA
 
 	// TileSet returns the TileSet.
 	TileSet() TileSet
@@ -43,11 +43,7 @@ type TileMap interface {
 	// Bounds returns the bounds of the TileMap measured in pixels.
 	Bounds() image.Rectangle
 
-	// AutoTileBitSet computes the bitset of a cell based on its eight neighbours.
-	// The test function tests whether a neighbouring cell is of the same type as the centre cell.
-	AutoTileBitSet(cx, cy int, testFunc func(x, y int) bool) uint8
-
 	// RangeTilesInViewport iterates over all tiles in the viewport
 	// and returns their positions and modelviews.
-	RangeTilesInViewport(viewport image.Rectangle, fn func(x, y int, modelview mathx.Aff3))
+	RangeTilesInViewport(viewport image.Rectangle, fn func(cell Coordinate, modelview mathx.Aff3))
 }

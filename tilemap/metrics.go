@@ -8,8 +8,7 @@ import (
 
 // Metrics provides functionality based on the dimensions of a TileMap.
 type Metrics struct {
-	// Cell size measured in pixels. Cells are always square.
-	CellFormat int
+	CellFormat CellFormat
 	// Width of the map measured in cells.
 	CellWidth int
 	// Height of the map measured in cells.
@@ -20,37 +19,17 @@ type Metrics struct {
 
 func (m Metrics) Bounds() image.Rectangle {
 	return image.Rectangle{
-		Min: m.CellBounds.Min.Mul(m.CellFormat),
-		Max: m.CellBounds.Max.Mul(m.CellFormat),
+		Min: m.CellBounds.Min.Mul(int(m.CellFormat)),
+		Max: m.CellBounds.Max.Mul(int(m.CellFormat)),
 	}
 }
 
-func (m Metrics) AutoTileBitSet(cx, cy int, testFunc func(x, y int) bool) uint8 {
-	var bitset uint8
-
-	for i, offset := range []struct {
-		X, Y int
-	}{
-		// The order determines the meaning of every bit. Do not change!
-		{X: +1, Y: -1}, // NE
-		{X: +1, Y: +1}, // SE
-		{X: -1, Y: +1}, // SW
-		{X: -1, Y: -1}, // NW
-		{X: +0, Y: -1}, // N
-		{X: +1, Y: +0}, // E
-		{X: +0, Y: +1}, // S
-		{X: -1, Y: +0}, // W
-	} {
-		x1, y1 := cx+offset.X, cy+offset.Y
-		if testFunc(x1, y1) {
-			bitset |= 1 << i
-		}
-	}
-
-	return bitset
+func (m Metrics) CellIndex(coord Coordinate) int {
+	x, y := coord.Cell()
+	return y*m.CellWidth + x
 }
 
-func (m Metrics) RangeTilesInViewport(viewport image.Rectangle, fn func(x, y int, modelview mathx.Aff3)) {
+func (m Metrics) RangeTilesInViewport(viewport image.Rectangle, fn func(cell Coordinate, modelview mathx.Aff3)) {
 	tileSize := mathx.Vec2{float32(m.CellFormat), float32(m.CellFormat)}
 	scale := mathx.ScaleAff3(tileSize)
 	x0, y0, x1, y1, xofs, yofs := m.drawExtents(viewport)
@@ -60,7 +39,7 @@ func (m Metrics) RangeTilesInViewport(viewport image.Rectangle, fn func(x, y int
 	for y := y0; y < y1; y++ {
 		for x := x0; x < x1; x++ {
 			modelview := scale.Translated(pixel)
-			fn(x, y, modelview)
+			fn(Cell(x, y), modelview)
 			pixel[0] += tileSize[0]
 		}
 		pixel[0] = xorig
@@ -69,14 +48,14 @@ func (m Metrics) RangeTilesInViewport(viewport image.Rectangle, fn func(x, y int
 }
 
 func (m Metrics) drawExtents(viewport image.Rectangle) (x0, y0, x1, y1, xofs, yofs int) {
-	xofs = -(viewport.Min.X % m.CellFormat)
-	yofs = -(viewport.Min.Y % m.CellFormat)
-	xedge := viewport.Max.X % m.CellFormat
-	yedge := viewport.Max.Y % m.CellFormat
-	x0 = viewport.Min.X / m.CellFormat
-	y0 = viewport.Min.Y / m.CellFormat
-	x1 = viewport.Max.X / m.CellFormat
-	y1 = viewport.Max.Y / m.CellFormat
+	xofs = -(viewport.Min.X % int(m.CellFormat))
+	yofs = -(viewport.Min.Y % int(m.CellFormat))
+	xedge := viewport.Max.X % int(m.CellFormat)
+	yedge := viewport.Max.Y % int(m.CellFormat)
+	x0 = viewport.Min.X / int(m.CellFormat)
+	y0 = viewport.Min.Y / int(m.CellFormat)
+	x1 = viewport.Max.X / int(m.CellFormat)
+	y1 = viewport.Max.Y / int(m.CellFormat)
 
 	if -xofs+xedge != 0 {
 		x1 += 1

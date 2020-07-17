@@ -53,10 +53,10 @@ func (b *Camera) Update() {
 	b.regions = b.regions[:0]
 	b.modelviews = b.modelviews[:0]
 	b.colors = b.colors[:0]
-	b.TileMap.RangeTilesInViewport(b.Viewport, func(x, y int, modelview mathx.Aff3) {
-		b.regions = append(b.regions, tileset.TileRegion(b.TileMap.TileAt(x, y)))
+	b.TileMap.RangeTilesInViewport(b.Viewport, func(cell Coordinate, modelview mathx.Aff3) {
+		b.regions = append(b.regions, tileset.TileRegion(b.TileMap.TileAt(cell)))
 		b.modelviews = append(b.modelviews, modelview.Translated(b.Pos))
-		b.colors = append(b.colors, b.TileMap.TintColorAt(x, y))
+		b.colors = append(b.colors, b.TileMap.TintColorAt(cell))
 	})
 }
 
