@@ -25,15 +25,17 @@ func AutoTile(tileMap TileMap, r image.Rectangle) {
 	for yc := r.Min.Y; yc < r.Max.Y; yc++ {
 		for xc := r.Min.X; xc < r.Max.X; xc++ {
 			cell := Cell(xc, yc)
-			tileId := tileMap.TileAt(cell)
-			if base, autoTiler, ok := tileSet.IsAutoTile(tileId); ok {
-				var bitset uint8
-				for bit, neighbour := range autoTileNeighbours {
-					if !tileSet.SameAutoTile(tileId, tileMap.TileAt(cell.Offset(neighbour))) {
-						bitset |= 1 << bit
+			if tileId := tileMap.TileAt(cell); tileId != Absent {
+				if base, autoTiler, ok := tileSet.IsAutoTile(tileId); ok {
+					var bitset uint8
+					for bit, neighbour := range autoTileNeighbours {
+						nbTileId := tileMap.TileAt(cell.Offset(neighbour))
+						if nbTileId == Absent || !tileSet.SameAutoTile(tileId, nbTileId) {
+							bitset |= 1 << bit
+						}
 					}
+					tileMap.SetTileAt(cell, base+autoTiler.AutoTile(bitset))
 				}
-				tileMap.SetTileAt(cell, base+autoTiler.AutoTile(bitset))
 			}
 		}
 	}

@@ -54,9 +54,11 @@ func (b *Camera) Update() {
 	b.modelviews = b.modelviews[:0]
 	b.colors = b.colors[:0]
 	b.TileMap.RangeTilesInViewport(b.Viewport, func(cell Coordinate, modelview mathx.Aff3) {
-		b.regions = append(b.regions, tileset.TileRegion(b.TileMap.TileAt(cell)))
-		b.modelviews = append(b.modelviews, modelview.Translated(b.Pos))
-		b.colors = append(b.colors, b.TileMap.TintColorAt(cell))
+		if tileId := b.TileMap.TileAt(cell); tileId != Absent {
+			b.regions = append(b.regions, tileset.TileRegion(tileId))
+			b.modelviews = append(b.modelviews, modelview.Translated(b.Pos))
+			b.colors = append(b.colors, b.TileMap.TintColorAt(cell))
+		}
 	})
 }
 

@@ -11,6 +11,9 @@ import (
 // TileID identifies a specific tile in a TileSet.
 type TileID uint32
 
+// Absent denotes that a tile does not exist.
+const Absent TileID = 0xFFFFFFFF
+
 // TileSet is a list of images that share a common underlying texture.
 type TileSet interface {
 	// Texture returns the underlying texture.
