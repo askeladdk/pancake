@@ -115,6 +115,6 @@ func (t *Text) ModelViewAt(i int) mathx.Aff3 {
 	return t.modelview[i].Translated(t.Pos)
 }
 
-func (t *Text) PivotAt(i int) mathx.Vec2 {
-	return mathx.Vec2{.5, .5}
+func (t *Text) OriginAt(i int) mathx.Vec2 {
+	return mathx.Vec2{-.5, -.5}
 }

@@ -32,7 +32,7 @@ type Batch interface {
 	Texture() *graphics.Texture
 	TextureRegionAt(i int) graphics.TextureRegion
 	ModelViewAt(i int) mathx.Aff3
-	PivotAt(i int) mathx.Vec2
+	OriginAt(i int) mathx.Vec2
 }
 
 func MakeVertices(mesh Mesh, batch Batch, vertices []Vertex) []Vertex {
@@ -42,10 +42,10 @@ func MakeVertices(mesh Mesh, batch Batch, vertices []Vertex) []Vertex {
 		modelview := batch.ModelViewAt(i)
 		region := batch.TextureRegionAt(i).Aff3()
 		rgba := batch.TintColorAt(i)
-		pivot := batch.PivotAt(i)
+		origin := batch.OriginAt(i)
 		for m, v := range mesh.Vertices {
 			tmpv[m] = Vertex{
-				XY: modelview.Project(v.XY.Add(pivot)),
+				XY: modelview.Project(v.XY.Sub(origin)),
 				UV: region.Project(v.UV),
 				RGBA: color.NRGBA{
 					R: uint8(uint16(v.RGBA.R) * uint16(rgba.R) / 255),

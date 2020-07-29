@@ -56,7 +56,7 @@ func (b *Batch) ModelViewAt(i int) mathx.Aff3 {
 	return b.modelviews[i]
 }
 
-// PivotAt implements graphics2d.Batch.
-func (b *Batch) PivotAt(i int) mathx.Vec2 {
-	return mathx.Vec2{.5, .5}
+// OriginAt implements graphics2d.Batch.
+func (b *Batch) OriginAt(i int) mathx.Vec2 {
+	return mathx.Vec2{-.5, -.5}
 }
