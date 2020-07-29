@@ -9,24 +9,24 @@ import (
 
 // Batch draws the viewport of a TileMap. It implements the graphics2d.Batch interface.
 type Batch struct {
-	TileMap    TileMap
-	Camera     *Camera
+	texture    *graphics.Texture
 	regions    []graphics.TextureRegion
 	modelviews []mathx.Aff3
 	colors     []color.NRGBA
 }
 
 // Update the batch. Call it whenever panning the camera or when the TileMap changes.
-func (b *Batch) Update() {
-	tileset := b.TileMap.TileSet()
+func (b *Batch) Update(tileMap TileMap, camera *Camera) {
+	tileset := tileMap.TileSet()
+	b.texture = tileset.Texture()
 	b.regions = b.regions[:0]
 	b.modelviews = b.modelviews[:0]
 	b.colors = b.colors[:0]
-	b.TileMap.RangeTilesInViewport(b.Camera.Viewport, func(cell Coordinate, modelview mathx.Aff3) {
-		if tileId := b.TileMap.TileAt(cell); tileId != Absent {
+	tileMap.RangeTilesInViewport(camera.Viewport, func(cell Coordinate, modelview mathx.Aff3) {
+		if tileId := tileMap.TileAt(cell); tileId != Absent {
 			b.regions = append(b.regions, tileset.TileRegion(tileId))
-			b.modelviews = append(b.modelviews, modelview.Translated(b.Camera.Pos))
-			b.colors = append(b.colors, b.TileMap.TintColorAt(cell))
+			b.modelviews = append(b.modelviews, modelview.Translated(camera.Pos))
+			b.colors = append(b.colors, tileMap.TintColorAt(cell))
 		}
 	})
 }
@@ -38,7 +38,7 @@ func (b *Batch) Len() int {
 
 // Texture implements graphics2d.Batch.
 func (b *Batch) Texture() *graphics.Texture {
-	return b.TileMap.TileSet().Texture()
+	return b.texture
 }
 
 // TintColorAt implements graphics2d.Batch.

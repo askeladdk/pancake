@@ -6,6 +6,10 @@ import (
 	"github.com/askeladdk/pancake/mathx"
 )
 
+type Bounded interface {
+	Bounds() image.Rectangle
+}
+
 // Camera controls the viewport of a TileMap.
 type Camera struct {
 	// Pos is the top-left corner position in pixels where the TileMap will be drawn on the screen.
@@ -15,8 +19,8 @@ type Camera struct {
 	// Min is the top-left corner and the difference between Min and Max is the size in pixels.
 	Viewport image.Rectangle
 
-	// Bounds is the total viewable area of the TileMap.
-	Bounds image.Rectangle
+	// Bounded knows the total viewable area of the TileMap.
+	Bounded Bounded
 }
 
 // OnScreenArea reports the area of the screen where the viewport will be drawn.
@@ -38,12 +42,12 @@ func (b *Camera) ScreenToWorld(v mathx.Vec2) image.Point {
 
 // Pan translates the camera viewport by delta pixels.
 func (b *Camera) Pan(dp image.Point) {
-	b.Viewport = mathx.ClampRectangle(b.Bounds, b.Viewport.Add(dp))
+	b.Viewport = mathx.ClampRectangle(b.Bounded.Bounds(), b.Viewport.Add(dp))
 }
 
 // CenterAt centers the camera viewport at the point.
 func (b *Camera) CenterAt(pt image.Point) {
 	size := b.Viewport.Size()
 	r := image.Rectangle{Max: size}.Add(pt.Sub(size.Div(2)))
-	b.Viewport = mathx.ClampRectangle(b.Bounds, r)
+	b.Viewport = mathx.ClampRectangle(b.Bounded.Bounds(), r)
 }

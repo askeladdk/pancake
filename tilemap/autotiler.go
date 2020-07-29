@@ -20,11 +20,11 @@ var autoTileNeighbours = []Coordinate{
 }
 
 // AutoTile modifies the TileMap by autotiling all tiles inside the given area.
-func AutoTile(tileMap TileMap, r image.Rectangle) {
+func AutoTile(tileMap TileMap, cellBounds image.Rectangle) {
 	tileSet := tileMap.TileSet()
-	for yc := r.Min.Y; yc < r.Max.Y; yc++ {
-		for xc := r.Min.X; xc < r.Max.X; xc++ {
-			cell := Cell(xc, yc)
+	for y := cellBounds.Min.Y; y < cellBounds.Max.Y; y++ {
+		for x := cellBounds.Min.X; x < cellBounds.Max.X; x++ {
+			cell := Cell(x, y)
 			if tileId := tileMap.TileAt(cell); tileId != Absent {
 				if base, autoTiler, ok := tileSet.IsAutoTile(tileId); ok {
 					var bitset uint8
