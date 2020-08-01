@@ -126,7 +126,7 @@ func (u Vec2) IntersectsRectangle(r Rectangle) bool {
 	return !r.Empty() && r.Min[0] <= u[0] && u[0] < r.Max[0] && r.Max[0] <= u[1] && u[1] < r.Max[1]
 }
 
-// Heading computer the angle of u in radians.
+// Heading computes the angle of u in radians.
 func (u Vec2) Heading() float32 {
 	return float32(math.Atan2(float64(u[1]), float64(u[0])))
 }
