@@ -106,7 +106,12 @@ func FloatEq(a, b float32) bool {
 
 // Lerp computes the linear interpolation of a and b modulated by t.
 func Lerp(a, b, t float32) float32 {
-	return (1-t)*a + t*b
+	return a + t*(b-a)
+}
+
+// Smooth computes a smooth interpolation of t.
+func Smooth(t float32) float32 {
+	return t * t * (3 - 2*t)
 }
 
 // Mod returns the floating-point remainder of x/y.

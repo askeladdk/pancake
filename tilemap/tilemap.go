@@ -1,7 +1,6 @@
 package tilemap
 
 import (
-	"image"
 	"image/color"
 
 	"github.com/askeladdk/pancake/graphics"
@@ -27,26 +26,22 @@ type TileSet interface {
 
 	// IsAutoTile returns whether the tile supports autotiling.
 	IsAutoTile(tileId TileID) (base TileID, autoTiler AutoTiler, ok bool)
+
+	// TileSize reports the size of the tiles in pixels.
+	TileSize() mathx.Vec2
 }
 
 // TileMap is a two-dimensional grid of tiles.
 type TileMap interface {
 	// TileAt returns the TileID at a grid position.
-	TileAt(cell Coordinate) TileID
+	TileAt(x, y int) TileID
 
 	// SetTileAt sets the TileID at a grid position.
-	SetTileAt(cell Coordinate, tileId TileID)
+	SetTileAt(x, y int, tileId TileID)
 
 	// TintColorAt reports the tint color of a tile at a grid position.
-	TintColorAt(cell Coordinate) color.NRGBA
+	TintColorAt(x, y int) color.NRGBA
 
 	// TileSet returns the TileSet.
 	TileSet() TileSet
-
-	// Bounds returns the bounds of the TileMap measured in pixels.
-	Bounds() image.Rectangle
-
-	// RangeTilesInViewport iterates over all tiles in the viewport
-	// and returns their positions and modelviews.
-	RangeTilesInViewport(viewport image.Rectangle, fn func(cell Coordinate, modelview mathx.Aff3))
 }

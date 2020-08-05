@@ -149,3 +149,12 @@ func (u Vec2) Project(v Vec2) Vec2 {
 	w := v.Unit()
 	return w.Mul(u.Dot(w))
 }
+
+// Frac returns the floating point fractions of the vector.
+func (u Vec2) Frac() Vec2 {
+	_, xfrac := math.Modf(float64(u[0]))
+	_, yfrac := math.Modf(float64(u[1]))
+	u[0] = float32(xfrac)
+	u[1] = float32(yfrac)
+	return u
+}

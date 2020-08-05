@@ -8,15 +8,15 @@ type AutoTiler interface {
 	AutoTile(bitset uint8) TileID
 }
 
-var autoTileNeighbours = []Coordinate{
-	NorthEast,
-	SouthEast,
-	SouthWest,
-	NorthWest,
-	North,
-	East,
-	South,
-	West,
+var autoTileNeighbours = []image.Point{
+	{1, -1},  // NE
+	{1, 1},   // SE
+	{-1, 1},  // SW
+	{-1, -1}, // NW
+	{0, -1},  // N
+	{1, 0},   // E
+	{0, 1},   // S
+	{-1, 0},  // W
 }
 
 // AutoTile modifies the TileMap by autotiling all tiles inside the given area.
@@ -24,17 +24,16 @@ func AutoTile(tileMap TileMap, cellBounds image.Rectangle) {
 	tileSet := tileMap.TileSet()
 	for y := cellBounds.Min.Y; y < cellBounds.Max.Y; y++ {
 		for x := cellBounds.Min.X; x < cellBounds.Max.X; x++ {
-			cell := Cell(x, y)
-			if tileId := tileMap.TileAt(cell); tileId != Absent {
+			if tileId := tileMap.TileAt(x, y); tileId != Absent {
 				if base, autoTiler, ok := tileSet.IsAutoTile(tileId); ok {
 					var bitset uint8
 					for bit, neighbour := range autoTileNeighbours {
-						nbTileId := tileMap.TileAt(cell.Offset(neighbour))
+						nbTileId := tileMap.TileAt(x+neighbour.X, y+neighbour.Y)
 						if nbTileId == Absent || !tileSet.SameAutoTile(tileId, nbTileId) {
 							bitset |= 1 << bit
 						}
 					}
-					tileMap.SetTileAt(cell, base+autoTiler.AutoTile(bitset))
+					tileMap.SetTileAt(x, y, base+autoTiler.AutoTile(bitset))
 				}
 			}
 		}

@@ -96,6 +96,18 @@ func (r Rectangle) IntersectsRectangle(s Rectangle) bool {
 		r.Min[1] < s.Max[1] && s.Min[1] < r.Max[1]
 }
 
+// Clamp clamps rectangle r to stay within bounds without changing the size of r.
+func (r Rectangle) Clamp(bounds Rectangle) Rectangle {
+	boundsSize := bounds.Size()
+	size := r.Size()
+	size[0] = Clamp(size[0], 0, boundsSize[0])
+	size[1] = Clamp(size[1], 0, boundsSize[1])
+	r.Min[0] = Clamp(r.Min[0], bounds.Min[0], bounds.Max[0]-size[0])
+	r.Min[1] = Clamp(r.Min[1], bounds.Min[1], bounds.Max[1]-size[1])
+	r.Max = r.Min.Add(size)
+	return r
+}
+
 // Circle represents a circle with radius r centered around (x, y).
 type Circle struct {
 	Center Vec2
