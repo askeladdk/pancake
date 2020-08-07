@@ -1,8 +1,6 @@
 package graphics2d
 
 import (
-	"image/color"
-
 	"github.com/askeladdk/pancake/graphics"
 	gl "github.com/askeladdk/pancake/graphics/opengl"
 	"github.com/askeladdk/pancake/mathx"
@@ -14,6 +12,7 @@ const vertexShader = `
 layout(location = 0) in vec2 in_Position;
 layout(location = 1) in vec2 in_Texture;
 layout(location = 2) in vec4 in_Color;
+layout(location = 3) in float in_ZOrder;
 
 out vec2 f_Texture;
 out vec4 f_Color;
@@ -24,7 +23,7 @@ void main()
 {
 	f_Texture = in_Texture;
 	f_Color = in_Color;
-    gl_Position = u_Projection * vec4(in_Position, 0, 1);
+    gl_Position = u_Projection * vec4(in_Position, in_ZOrder, 1);
 }
 `
 
@@ -47,24 +46,20 @@ void main()
 var Quad = Mesh{
 	Vertices: []Vertex{
 		Vertex{
-			XY:   mathx.Vec2{-.5, -.5},
-			UV:   mathx.Vec2{0, 0},
-			RGBA: color.NRGBA{255, 255, 255, 255},
+			XY: mathx.Vec2{-.5, -.5},
+			UV: mathx.Vec2{0, 0},
 		},
 		Vertex{
-			XY:   mathx.Vec2{-.5, +.5},
-			UV:   mathx.Vec2{0, 1},
-			RGBA: color.NRGBA{255, 255, 255, 255},
+			XY: mathx.Vec2{-.5, +.5},
+			UV: mathx.Vec2{0, 1},
 		},
 		Vertex{
-			XY:   mathx.Vec2{+.5, -.5},
-			UV:   mathx.Vec2{1, 0},
-			RGBA: color.NRGBA{255, 255, 255, 255},
+			XY: mathx.Vec2{+.5, -.5},
+			UV: mathx.Vec2{1, 0},
 		},
 		Vertex{
-			XY:   mathx.Vec2{+.5, +.5},
-			UV:   mathx.Vec2{1, 1},
-			RGBA: color.NRGBA{255, 255, 255, 255},
+			XY: mathx.Vec2{+.5, +.5},
+			UV: mathx.Vec2{1, 1},
 		},
 	},
 	Indices:  []uint32{0, 1, 2, 1, 2, 3},

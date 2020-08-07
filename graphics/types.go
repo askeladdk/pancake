@@ -75,7 +75,8 @@ func (format ColorFormat) pixelSize() int {
 type AttribType uint32
 
 const (
-	Float AttribType = iota
+	Float32 AttribType = iota
+	Float64
 	Vec2
 	Vec3
 	Vec4
@@ -86,7 +87,9 @@ const (
 
 func (atype AttribType) components() int {
 	switch atype {
-	case Float:
+	case Float32:
+		return 1
+	case Float64:
 		return 1
 	case Vec2:
 		return 2
@@ -120,8 +123,10 @@ func (atype AttribType) bytes() int {
 	switch atype {
 	case Byte4:
 		return 1
-	default:
+	case Float32:
 		return 4
+	default:
+		return 8
 	}
 }
 
@@ -129,8 +134,10 @@ func (atype AttribType) xtype() gl.Enum {
 	switch atype {
 	case Byte4:
 		return gl.UNSIGNED_BYTE
-	default:
+	case Float32:
 		return gl.FLOAT
+	default:
+		return gl.DOUBLE
 	}
 }
 

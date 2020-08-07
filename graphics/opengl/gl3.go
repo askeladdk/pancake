@@ -263,45 +263,98 @@ func Uniform1ui(dst Uniform, v0 uint) {
 	})
 }
 
-func Uniform1f(dst Uniform, v0 float32) {
+func Uniform1f(dst Uniform, v0 float64) {
 	mainthread.Call(func() {
-		gl.Uniform1f(int32(dst), v0)
+		gl.Uniform1f(int32(dst), float32(v0))
 	})
 }
 
-func Uniform1fv(dst Uniform, v []float32) {
+func Uniform1fv(dst Uniform, v []float64) {
+	vs32 := make([]float32, len(v))
+	for i, f64 := range v {
+		vs32[i] = float32(f64)
+	}
 	mainthread.Call(func() {
-		gl.Uniform1fv(int32(dst), int32(len(v)), &v[0])
+		gl.Uniform1fv(int32(dst), int32(len(v)), &vs32[0])
 	})
 }
 
 func Uniform2fv(dst Uniform, vs []mathx.Vec2) {
+	vs32 := make([]float32, 2*len(vs))
+	for i, vi := range vs {
+		vs32[2*i+0] = float32(vi[0])
+		vs32[2*i+1] = float32(vi[1])
+	}
 	mainthread.Call(func() {
-		gl.Uniform2fv(int32(dst), int32(2*len(vs)), &vs[0][0])
+		gl.Uniform2fv(int32(dst), int32(2*len(vs)), &vs32[0])
 	})
 }
 
 func Uniform3fv(dst Uniform, vs []mathx.Vec3) {
+	vs32 := make([]float32, 3*len(vs))
+	for i, vi := range vs {
+		vs32[3*i+0] = float32(vi[0])
+		vs32[3*i+1] = float32(vi[1])
+		vs32[3*i+2] = float32(vi[2])
+	}
 	mainthread.Call(func() {
-		gl.Uniform3fv(int32(dst), int32(3*len(vs)), &vs[0][0])
+		gl.Uniform3fv(int32(dst), int32(3*len(vs)), &vs32[0])
 	})
 }
 
 func Uniform4fv(dst Uniform, vs []mathx.Vec4) {
+	vs32 := make([]float32, 4*len(vs))
+	for i, vi := range vs {
+		vs32[4*i+0] = float32(vi[0])
+		vs32[4*i+1] = float32(vi[1])
+		vs32[4*i+2] = float32(vi[2])
+		vs32[4*i+3] = float32(vi[3])
+	}
 	mainthread.Call(func() {
-		gl.Uniform4fv(int32(dst), int32(4*len(vs)), &vs[0][0])
+		gl.Uniform4fv(int32(dst), int32(4*len(vs)), &vs32[0])
 	})
 }
 
 func UniformMatrix3fv(dst Uniform, vs []mathx.Mat3) {
+	vs32 := make([]float32, 9*len(vs))
+	for i, vi := range vs {
+		vs32[9*i+0] = float32(vi[0])
+		vs32[9*i+1] = float32(vi[1])
+		vs32[9*i+2] = float32(vi[2])
+		vs32[9*i+3] = float32(vi[3])
+		vs32[9*i+4] = float32(vi[4])
+		vs32[9*i+5] = float32(vi[5])
+		vs32[9*i+6] = float32(vi[6])
+		vs32[9*i+7] = float32(vi[7])
+		vs32[9*i+8] = float32(vi[8])
+	}
 	mainthread.Call(func() {
-		gl.UniformMatrix3fv(int32(dst), int32(len(vs)), false, &vs[0][0])
+		gl.UniformMatrix3fv(int32(dst), int32(len(vs)), false, &vs32[0])
 	})
 }
 
 func UniformMatrix4fv(dst Uniform, vs []mathx.Mat4) {
+	vs32 := make([]float32, 16*len(vs))
+	for i, vi := range vs {
+		vs32[16*i+0] = float32(vi[0])
+		vs32[16*i+1] = float32(vi[1])
+		vs32[16*i+2] = float32(vi[2])
+		vs32[16*i+3] = float32(vi[3])
+		vs32[16*i+4] = float32(vi[4])
+		vs32[16*i+5] = float32(vi[5])
+		vs32[16*i+6] = float32(vi[6])
+		vs32[16*i+7] = float32(vi[7])
+		vs32[16*i+8] = float32(vi[8])
+		vs32[16*i+9] = float32(vi[9])
+		vs32[16*i+10] = float32(vi[10])
+		vs32[16*i+11] = float32(vi[11])
+		vs32[16*i+12] = float32(vi[12])
+		vs32[16*i+13] = float32(vi[13])
+		vs32[16*i+14] = float32(vi[14])
+		vs32[16*i+15] = float32(vi[15])
+	}
 	mainthread.Call(func() {
-		gl.UniformMatrix4fv(int32(dst), int32(len(vs)), false, &vs[0][0])
+		gl.UniformMatrix4fv(int32(dst), int32(len(vs)), false, &vs32[0])
 	})
 }
 

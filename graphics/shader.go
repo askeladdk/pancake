@@ -49,7 +49,7 @@ func (prg *ShaderProgram) SetUniform(name string, value interface{}) bool {
 			gl.Uniform1i(loc, v)
 		case uint:
 			gl.Uniform1ui(loc, v)
-		case float32:
+		case float64:
 			gl.Uniform1f(loc, v)
 		case mathx.Vec2:
 			gl.Uniform2fv(loc, []mathx.Vec2{v})
@@ -63,7 +63,7 @@ func (prg *ShaderProgram) SetUniform(name string, value interface{}) bool {
 			gl.UniformMatrix4fv(loc, []mathx.Mat4{v})
 		case mathx.Aff3:
 			gl.UniformMatrix3fv(loc, []mathx.Mat3{v.Mat3()})
-		case []float32:
+		case []float64:
 			gl.Uniform1fv(loc, v)
 		case []mathx.Vec2:
 			gl.Uniform2fv(loc, v)

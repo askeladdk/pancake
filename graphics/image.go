@@ -31,16 +31,16 @@ func (t *subTexture) Scale() mathx.Vec2 {
 }
 
 type TextureRegion struct {
-	Sx, Sy, Tx, Ty float32
+	Sx, Sy, Tx, Ty float64
 }
 
 func NewTextureRegion(size image.Point, region image.Rectangle) TextureRegion {
 	regionsz := region.Size()
 	return TextureRegion{
-		Sx: float32(regionsz.X) / float32(size.X),
-		Sy: float32(regionsz.Y) / float32(size.Y),
-		Tx: float32(region.Min.X) / float32(size.X),
-		Ty: float32(region.Min.Y) / float32(size.Y),
+		Sx: float64(regionsz.X) / float64(size.X),
+		Sy: float64(regionsz.Y) / float64(size.Y),
+		Tx: float64(region.Min.X) / float64(size.X),
+		Ty: float64(region.Min.Y) / float64(size.Y),
 	}
 }
 

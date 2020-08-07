@@ -53,7 +53,7 @@ func (b *Batch) Update(tileMap TileMap, camera *graphics2d.Camera) {
 	tileSize := tileSet.TileSize()
 	scale := mathx.ScaleAff3(tileSize)
 	x0, y0, x1, y1, xofs, yofs := drawExtents(tileSize, camera.WorldViewport())
-	position := mathx.Vec2{float32(xofs), float32(yofs)}.
+	position := mathx.Vec2{float64(xofs), float64(yofs)}.
 		Add(tileSize.Mul(.5)).
 		Add(camera.Viewport.Min)
 
@@ -101,4 +101,9 @@ func (b *Batch) ModelViewAt(i int) mathx.Aff3 {
 // OriginAt implements graphics2d.Batch.
 func (b *Batch) OriginAt(i int) mathx.Vec2 {
 	return mathx.Vec2{}
+}
+
+// ZOrderAt implements graphic2.Batch.
+func (b *Batch) ZOrderAt(i int) float64 {
+	return 0
 }

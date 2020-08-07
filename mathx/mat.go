@@ -3,11 +3,11 @@ package mathx
 import (
 	"math"
 
-	"golang.org/x/image/math/f32"
+	"golang.org/x/image/math/f64"
 )
 
 // Mat3 is a 3x3 matrix in row major order.
-type Mat3 f32.Mat3
+type Mat3 f64.Mat3
 
 func Ident3() Mat3 {
 	return Mat3{
@@ -18,7 +18,7 @@ func Ident3() Mat3 {
 }
 
 // Mat4 is a 4x4 matrix in row major order.
-type Mat4 f32.Mat4
+type Mat4 f64.Mat4
 
 func Ident4() Mat4 {
 	return Mat4{
@@ -35,7 +35,7 @@ func Ident4() Mat4 {
 //  [0] [2] [4]
 //  [1] [3] [5]
 //   0   0   1
-type Aff3 f32.Aff3
+type Aff3 f64.Aff3
 
 func IdentAff3() Aff3 {
 	return Aff3{
@@ -61,9 +61,9 @@ func ScaleAff3(u Vec2) Aff3 {
 	}
 }
 
-func RotateAff3(radians float32) Aff3 {
-	s, c := math.Sincos(float64(radians))
-	return Aff3{float32(c), float32(s), float32(-s), float32(c), 0, 0}
+func RotateAff3(radians float64) Aff3 {
+	s, c := math.Sincos(radians)
+	return Aff3{c, s, -s, c, 0, 0}
 }
 
 func (m Aff3) Translated(u Vec2) Aff3 {
@@ -77,11 +77,11 @@ func (m Aff3) Scaled(u Vec2) Aff3 {
 	return m
 }
 
-func (m Aff3) Rotated(radians float32) Aff3 {
+func (m Aff3) Rotated(radians float64) Aff3 {
 	return m.Mul3(RotateAff3(radians))
 }
 
-func (m Aff3) Mul(v float32) Aff3 {
+func (m Aff3) Mul(v float64) Aff3 {
 	return Aff3{
 		v * m[0],
 		v * m[1],
@@ -120,7 +120,7 @@ func (m Aff3) Mat4() Mat4 {
 	}
 }
 
-func (m Aff3) Det() float32 {
+func (m Aff3) Det() float64 {
 	return m[0]*m[3] - m[2]*m[1]
 }
 
@@ -139,7 +139,7 @@ func (m Aff3) Unproject(u Vec2) Vec2 {
 func (m Aff3) Inv() Aff3 {
 	det := m.Det()
 
-	if FloatEq(det, 0) {
+	if Equal(det, 0) {
 		return Aff3{}
 	}
 

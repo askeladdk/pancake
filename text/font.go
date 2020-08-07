@@ -15,8 +15,8 @@ import (
 
 var ASCII = []rune(" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~")
 
-func fixedToFloat32(x fixed.Int26_6) float32 {
-	return float32(x) / (1 << 6)
+func fixedToFloat64(x fixed.Int26_6) float64 {
+	return float64(x) / (1 << 6)
 }
 
 func combineRuneSets(runeSets [][]rune) []rune {
@@ -41,21 +41,21 @@ func combineRuneSets(runeSets [][]rune) []rune {
 type Font interface {
 	Texture() *graphics.Texture
 	Glyph(r rune) Glyph
-	LineHeight() float32
-	Kern(r0, r1 rune) float32
+	LineHeight() float64
+	Kern(r0, r1 rune) float64
 }
 
 type Glyph struct {
 	Region  graphics.TextureRegion
 	Scale   mathx.Vec2
-	Advance float32
+	Advance float64
 }
 
 type faceFont struct {
 	face       font.Face
 	texture    *graphics.Texture
 	mapping    map[rune]Glyph
-	lineHeight float32
+	lineHeight float64
 }
 
 func NewFontFromFace(face font.Face, runeSets ...[]rune) Font {
@@ -95,12 +95,9 @@ func NewFontFromFace(face font.Face, runeSets ...[]rune) Font {
 			}
 
 			mapping[r] = Glyph{
-				Region: graphics.NewTextureRegion(imageSize, region),
-				Scale: mathx.Vec2{
-					float32(w),
-					float32(h),
-				},
-				Advance: fixedToFloat32(a),
+				Region:  graphics.NewTextureRegion(imageSize, region),
+				Scale:   mathx.Vec2{float64(w), float64(h)},
+				Advance: fixedToFloat64(a),
 			}
 
 			dr, mask, maskp, _, _ := face.Glyph(dot, r)
@@ -116,7 +113,7 @@ func NewFontFromFace(face font.Face, runeSets ...[]rune) Font {
 		face:       face,
 		mapping:    mapping,
 		texture:    graphics.NewTextureFromImage(rgba, graphics.FilterLinear),
-		lineHeight: float32(face.Metrics().Height.Ceil()),
+		lineHeight: float64(face.Metrics().Height.Ceil()),
 	}
 }
 
@@ -134,10 +131,10 @@ func (ttf *faceFont) Glyph(r rune) Glyph {
 	}
 }
 
-func (ttf *faceFont) LineHeight() float32 {
+func (ttf *faceFont) LineHeight() float64 {
 	return ttf.lineHeight
 }
 
-func (ttf *faceFont) Kern(r0, r1 rune) float32 {
-	return float32(ttf.face.Kern(r0, r1).Ceil())
+func (ttf *faceFont) Kern(r0, r1 rune) float64 {
+	return float64(ttf.face.Kern(r0, r1).Ceil())
 }

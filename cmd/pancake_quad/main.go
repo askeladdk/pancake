@@ -47,7 +47,7 @@ void main()
 }
 `
 
-var vertices = []float32{
+var vertices = []float64{
 	// x, y, u, v
 	// -1, -1, 0, 1,
 	// +1, -1, 1, 1,
@@ -125,8 +125,8 @@ func run(app pancake.App) error {
 
 				projection := mathx.Ortho2D(
 					0,
-					float32(framesz.X),
-					float32(framesz.Y),
+					float64(framesz.X),
+					float64(framesz.Y),
 					0,
 				)
 

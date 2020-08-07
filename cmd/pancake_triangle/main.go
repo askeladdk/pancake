@@ -5,6 +5,7 @@ import (
 	"image"
 
 	"github.com/askeladdk/pancake/input"
+	"github.com/askeladdk/pancake/mathx"
 
 	"github.com/askeladdk/pancake"
 	"github.com/askeladdk/pancake/graphics"
@@ -40,7 +41,7 @@ void main()
 }
 `
 
-var triangle = []float32{
+var triangle = []float64{
 	// x, y, r, g, b
 	+0.0, +0.5, 1, 0, 0,
 	+0.5, -0.5, 0, 1, 0,
@@ -90,14 +91,13 @@ func run(app pancake.App) error {
 
 			// linear interpolation between current and previous frame.
 			if interpolate {
-				a := e.Alpha
-				t = tn*a + tl*(1-a)
+				t = mathx.Lerp(tl, tn, e.Alpha)
 			} else {
 				t = tn
 			}
 
 			program.Begin()
-			program.SetUniform("t", float32(t))
+			program.SetUniform("t", t)
 			vslice.Begin()
 			vslice.Draw(gl.TRIANGLES)
 			vslice.End()

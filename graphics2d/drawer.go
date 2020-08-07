@@ -9,15 +9,17 @@ import (
 )
 
 var VertexFormat = graphics.AttribFormat{
-	graphics.Vec2,  // XY
-	graphics.Vec2,  // UV
-	graphics.Byte4, // RGBA
+	graphics.Vec2,    // XY
+	graphics.Vec2,    // UV
+	graphics.Byte4,   // RGBA
+	graphics.Float32, // Z
 }
 
 type Vertex struct {
 	XY   mathx.Vec2
 	UV   mathx.Vec2
 	RGBA color.NRGBA
+	Z    float32
 }
 
 type Mesh struct {
@@ -33,6 +35,7 @@ type Batch interface {
 	TextureRegionAt(i int) graphics.TextureRegion
 	ModelViewAt(i int) mathx.Aff3
 	OriginAt(i int) mathx.Vec2
+	ZOrderAt(i int) float64
 }
 
 func MakeVertices(mesh Mesh, batch Batch, vertices []Vertex) []Vertex {
@@ -43,16 +46,13 @@ func MakeVertices(mesh Mesh, batch Batch, vertices []Vertex) []Vertex {
 		region := batch.TextureRegionAt(i).Aff3()
 		rgba := batch.TintColorAt(i)
 		origin := batch.OriginAt(i)
+		z := float32(batch.ZOrderAt(i))
 		for m, v := range mesh.Vertices {
 			tmpv[m] = Vertex{
-				XY: modelview.Project(v.XY.Sub(origin)),
-				UV: region.Project(v.UV),
-				RGBA: color.NRGBA{
-					R: uint8(uint16(v.RGBA.R) * uint16(rgba.R) / 255),
-					G: uint8(uint16(v.RGBA.G) * uint16(rgba.G) / 255),
-					B: uint8(uint16(v.RGBA.B) * uint16(rgba.B) / 255),
-					A: uint8(uint16(v.RGBA.A) * uint16(rgba.A) / 255),
-				},
+				XY:   modelview.Project(v.XY.Sub(origin)),
+				UV:   region.Project(v.UV),
+				RGBA: rgba,
+				Z:    z,
 			}
 		}
 		for _, n := range mesh.Indices {

@@ -12,13 +12,12 @@ type Text struct {
 	Pos        mathx.Vec2
 	Dot        mathx.Vec2
 	Color      color.NRGBA
-	Scale      float32
-	LineHeight float32
-	TabWidth   float32
+	Scale      float64
+	LineHeight float64
+	TabWidth   float64
 
 	modelview []mathx.Aff3
 	region    []graphics.TextureRegion
-	colors    []color.NRGBA
 	buffer    []byte
 	font      Font
 	lastRune  rune
@@ -39,7 +38,6 @@ func (t *Text) Clear() {
 	t.Dot = mathx.Vec2{}
 	t.modelview = t.modelview[:0]
 	t.region = t.region[:0]
-	t.colors = t.colors[:0]
 	t.buffer = t.buffer[:0]
 	t.lastRune = -1
 }
@@ -82,7 +80,6 @@ func (t *Text) draw() {
 		)
 
 		t.region = append(t.region, glyph.Region)
-		t.colors = append(t.colors, t.Color)
 
 		advance := glyph.Advance
 		if t.lastRune >= 0 {
@@ -95,26 +92,37 @@ func (t *Text) draw() {
 	}
 }
 
+// Len implements graphics2d.Batch.
 func (t *Text) Len() int {
 	return len(t.modelview)
 }
 
+// TintColorAt implements graphics2d.Batch.
 func (t *Text) TintColorAt(i int) color.NRGBA {
-	return t.colors[i]
+	return t.Color
 }
 
+// Texture implements graphics2d.Batch.
 func (t *Text) Texture() *graphics.Texture {
 	return t.font.Texture()
 }
 
+// TextureRegionAt implements graphics2d.Batch.
 func (t *Text) TextureRegionAt(i int) graphics.TextureRegion {
 	return t.region[i]
 }
 
+// ModelViewAt implements graphics2d.Batch.
 func (t *Text) ModelViewAt(i int) mathx.Aff3 {
 	return t.modelview[i].Translated(t.Pos)
 }
 
+// OriginAt implements graphics2d.Batch.
 func (t *Text) OriginAt(i int) mathx.Vec2 {
 	return mathx.Vec2{-.5, -.5}
+}
+
+// ZOrderAt implements graphics2d.Batch.
+func (t *Text) ZOrderAt(i int) float64 {
+	return 0
 }

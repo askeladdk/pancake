@@ -1,6 +1,6 @@
 package mathx
 
-func Ortho(left, right, bottom, top, near, far float32) Mat4 {
+func Ortho(left, right, bottom, top, near, far float64) Mat4 {
 	rml, tmb, fmn := (right - left), (top - bottom), (far - near)
 
 	return Mat4{
@@ -11,6 +11,6 @@ func Ortho(left, right, bottom, top, near, far float32) Mat4 {
 	}
 }
 
-func Ortho2D(left, right, bottom, top float32) Mat4 {
+func Ortho2D(left, right, bottom, top float64) Mat4 {
 	return Ortho(left, right, bottom, top, -1, 1)
 }

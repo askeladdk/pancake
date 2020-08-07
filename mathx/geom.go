@@ -1,5 +1,7 @@
 package mathx
 
+import "math"
+
 // Rectangle represents an axis-aligned bounding box (AABB)
 // bounded by (x0, y0) -- (x1, y1).
 type Rectangle struct {
@@ -7,7 +9,7 @@ type Rectangle struct {
 }
 
 // Rect returns a canonical Rectangle in the area (x0, y0) -- (x1, y1).
-func Rect(x0, y0, x1, y1 float32) Rectangle {
+func Rect(x0, y0, x1, y1 float64) Rectangle {
 	if x0 > x1 {
 		x0, x1 = x1, x0
 	}
@@ -18,7 +20,7 @@ func Rect(x0, y0, x1, y1 float32) Rectangle {
 }
 
 // Elem decomposes r in its individual elements.
-func (r Rectangle) Elem() (x0, y0, x1, y1 float32) {
+func (r Rectangle) Elem() (x0, y0, x1, y1 float64) {
 	x0, y0 = r.Min.Elem()
 	x1, y1 = r.Max.Elem()
 	return
@@ -45,12 +47,12 @@ func (r Rectangle) Sub(u Vec2) Rectangle {
 }
 
 // Dx computes x1 - x0.
-func (r Rectangle) Dx() float32 {
+func (r Rectangle) Dx() float64 {
 	return r.Max[0] - r.Min[0]
 }
 
 // Dy computes y1 - y0.
-func (r Rectangle) Dy() float32 {
+func (r Rectangle) Dy() float64 {
 	return r.Max[1] - r.Min[1]
 }
 
@@ -111,16 +113,16 @@ func (r Rectangle) Clamp(bounds Rectangle) Rectangle {
 // Circle represents a circle with radius r centered around (x, y).
 type Circle struct {
 	Center Vec2
-	Radius float32
+	Radius float64
 }
 
 // C returns a canonical Circle with center (x, y) and radius |r|.
-func C(x, y, r float32) Circle {
-	return Circle{Vec2{x, y}, Abs(r)}
+func C(x, y, r float64) Circle {
+	return Circle{Vec2{x, y}, math.Abs(r)}
 }
 
 // Elem decomposes c in its individual elements.
-func (c Circle) Elem() (x, y, r float32) {
+func (c Circle) Elem() (x, y, r float64) {
 	x, y = c.Center.Elem()
 	r = c.Radius
 	return
@@ -162,8 +164,8 @@ func (c0 Circle) IntersectsCircle(c1 Circle) bool {
 // IntersectsCircle tests whether circle c intersects with rectangle r.
 func (c Circle) IntersectsRectangle(r Rectangle) bool {
 	closest := Vec2{
-		Max(r.Min[0], Min(c.Center[0], r.Max[0])),
-		Max(r.Min[1], Min(c.Center[1], r.Max[1])),
+		math.Max(r.Min[0], math.Min(c.Center[0], r.Max[0])),
+		math.Max(r.Min[1], math.Min(c.Center[1], r.Max[1])),
 	}
 	return closest.IntersectsCircle(c)
 }

@@ -24,7 +24,7 @@ type Camera struct {
 	// It is expected to be a value between 0 and 1.
 	// Higher values means faster smoothing.
 	// Zero or negative means that smoothing is disabled.
-	Smoothing float32
+	Smoothing float64
 }
 
 // Scissor reports the rectangle of the screen to scissor.
