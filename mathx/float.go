@@ -109,9 +109,31 @@ func Lerp(a, b, t float32) float32 {
 	return a + t*(b-a)
 }
 
+// InvLerp inverts a lerp.
+//  InvLerp(a, b, Lerp(a, b, t)) = t
+func InvLerp(a, b, c float32) float32 {
+	return 1 - (b-c)/(b-a)
+}
+
 // Smooth computes a smooth interpolation of t.
 func Smooth(t float32) float32 {
 	return t * t * (3 - 2*t)
+}
+
+// Saturate computes the proportion of x between a and b as a value between 0 and 1.
+//  Saturate(3, 9,  1) = 0
+//  Saturate(3, 9,  6) = 0.5
+//  Saturate(3, 9, 10) = 1
+func Saturate(a, b, x float32) float32 {
+	return Clamp((x-a)/(b-a), 0, 1)
+}
+
+// Step returns 0 if x < edge, else 1.
+func Step(edge, x float32) float32 {
+	if x < edge {
+		return 0
+	}
+	return 1
 }
 
 // Mod returns the floating-point remainder of x/y.
