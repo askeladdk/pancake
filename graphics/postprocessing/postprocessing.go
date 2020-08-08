@@ -5,7 +5,7 @@ import (
 
 	"github.com/askeladdk/pancake/graphics"
 	gl "github.com/askeladdk/pancake/graphics/opengl"
-	"github.com/go-gl/mathgl/mgl32"
+	"github.com/askeladdk/pancake/mathx"
 )
 
 // Pass-through vertex shader.
@@ -41,13 +41,7 @@ void main()
 `
 
 var (
-	vertices = []float32{
-		// -1, -1, 0, 1,
-		// +1, -1, 1, 1,
-		// +1, +1, 1, 0,
-		// -1, -1, 0, 1,
-		// +1, +1, 1, 0,
-		// -1, +1, 0, 0,
+	vertices = []float64{
 		-1, -1, 0, 0,
 		-1, +1, 0, 1,
 		+1, -1, 1, 0,
@@ -67,12 +61,12 @@ type Targets []*graphics.Framebuffer
 
 type Effects []*graphics.ShaderProgram
 
-func rectToVec4(r image.Rectangle) mgl32.Vec4 {
-	return mgl32.Vec4{
-		float32(r.Min.X),
-		float32(r.Min.Y),
-		float32(r.Max.X),
-		float32(r.Max.Y),
+func rectToVec4(r image.Rectangle) mathx.Vec4 {
+	return mathx.Vec4{
+		float64(r.Min.X),
+		float64(r.Min.Y),
+		float64(r.Max.X),
+		float64(r.Max.Y),
 	}
 }
 
