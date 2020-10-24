@@ -170,15 +170,15 @@ func (c Circle) IntersectsRectangle(r Rectangle) bool {
 	return closest.IntersectsCircle(c)
 }
 
-// Intersector intersects with geometric objects.
-type Intersector interface {
+// Geometry intersects with geometric objects.
+type Geometry interface {
 	IntersectsPoint(Vec2) bool
 	IntersectsCircle(Circle) bool
 	IntersectsRectangle(Rectangle) bool
 }
 
-// Intersects tests whether a and b intersect.
-func Intersects(a, b Intersector) bool {
+// Intersects tests whether geometries are intersecting.
+func Intersects(a, b Geometry) bool {
 	switch x := b.(type) {
 	case *Rectangle:
 		return a.IntersectsRectangle(*x)
