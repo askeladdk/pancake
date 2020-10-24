@@ -532,9 +532,9 @@ func Flush() {
 	mainthread.Call(gl.Flush)
 }
 
-func ClearColor(r, g, b, a float32) {
+func ClearColor(r, g, b, a float64) {
 	mainthread.Call(func() {
-		gl.ClearColor(r, g, b, a)
+		gl.ClearColor(float32(r), float32(g), float32(b), float32(a))
 	})
 }
 
