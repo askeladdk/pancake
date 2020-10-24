@@ -40,7 +40,7 @@ type TileMap interface {
 	SetTileAt(x, y int, tileId TileID)
 
 	// TintColorAt reports the tint color of a tile at a grid position.
-	TintColorAt(x, y int) color.NRGBA
+	TintColorAt(x, y int) color.Color
 
 	// TileSet returns the TileSet.
 	TileSet() TileSet

@@ -159,14 +159,14 @@ func NewTexture(size image.Point, filter Filter, format ColorFormat, pixels []by
 
 func imagePix(img image.Image) ([]uint8, ColorFormat) {
 	switch im := img.(type) {
-	case *image.NRGBA:
+	case *image.RGBA:
 		return im.Pix, ColorFormatRGBA
 	case *image.Paletted:
 		return im.Pix, ColorFormatIndexed
 	default:
-		nrgba := image.NewNRGBA(img.Bounds())
-		draw.Draw(nrgba, nrgba.Bounds(), img, image.Point{}, draw.Src)
-		return nrgba.Pix, ColorFormatRGBA
+		rgba := image.NewRGBA(img.Bounds())
+		draw.Draw(rgba, rgba.Bounds(), img, image.Point{}, draw.Src)
+		return rgba.Pix, ColorFormatRGBA
 	}
 }
 

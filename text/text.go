@@ -11,7 +11,7 @@ import (
 type Text struct {
 	Pos        mathx.Vec2
 	Dot        mathx.Vec2
-	Color      color.NRGBA
+	Color      color.Color
 	Scale      float64
 	LineHeight float64
 	TabWidth   float64
@@ -25,7 +25,7 @@ type Text struct {
 
 func NewText(font Font) *Text {
 	return &Text{
-		Color:      color.NRGBA{255, 255, 255, 255},
+		Color:      color.RGBA{255, 255, 255, 255},
 		LineHeight: font.LineHeight(),
 		TabWidth:   font.Glyph(' ').Advance * 4,
 		Scale:      1,
@@ -98,7 +98,7 @@ func (t *Text) Len() int {
 }
 
 // TintColorAt implements graphics2d.Batch.
-func (t *Text) TintColorAt(i int) color.NRGBA {
+func (t *Text) TintColorAt(i int) color.Color {
 	return t.Color
 }
 

@@ -39,7 +39,7 @@ type Batch struct {
 	texture    *graphics.Texture
 	regions    []graphics.TextureRegion
 	modelviews []mathx.Aff3
-	colors     []color.NRGBA
+	colors     []color.Color
 }
 
 // Update the batch. Call it whenever panning the camera or when the TileMap changes.
@@ -84,7 +84,7 @@ func (b *Batch) TextureAt(i int) *graphics.Texture {
 }
 
 // TintColorAt implements graphics2d.Batch.
-func (b *Batch) TintColorAt(i int) color.NRGBA {
+func (b *Batch) TintColorAt(i int) color.Color {
 	return b.colors[i]
 }
 

@@ -297,6 +297,9 @@ func Main(opt Options, run func(App) error) error {
 
 			gl.BindFramebuffer(gl.FRAMEBUFFER, gl.Framebuffer(0))
 
+			gl.Enable(gl.BLEND)
+			gl.BlendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
+
 			err = run(&a)
 		})
 

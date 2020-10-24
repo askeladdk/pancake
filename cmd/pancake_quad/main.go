@@ -96,8 +96,6 @@ func run(app pancake.App) error {
 		ebo := graphics.NewIndexBufferUint8(indices)
 		vslice := graphics.NewIndexedVertexSlice(ebo, buffer)
 
-		gl.Enable(gl.BLEND)
-		gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 		gl.ClearColor(0, 0, 0, 0)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 
