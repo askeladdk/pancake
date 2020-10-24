@@ -78,8 +78,8 @@ func (b *Batch) Len() int {
 	return len(b.regions)
 }
 
-// Texture implements graphics2d.Batch.
-func (b *Batch) Texture() *graphics.Texture {
+// TextureAt implements graphics2d.Batch.
+func (b *Batch) TextureAt(i int) *graphics.Texture {
 	return b.texture
 }
 

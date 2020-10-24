@@ -102,8 +102,8 @@ func (t *Text) TintColorAt(i int) color.NRGBA {
 	return t.Color
 }
 
-// Texture implements graphics2d.Batch.
-func (t *Text) Texture() *graphics.Texture {
+// TextureAt implements graphics2d.Batch.
+func (t *Text) TextureAt(_ int) *graphics.Texture {
 	return t.font.Texture()
 }
 

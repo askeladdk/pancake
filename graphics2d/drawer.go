@@ -31,17 +31,17 @@ type Mesh struct {
 type Batch interface {
 	Len() int
 	TintColorAt(i int) color.NRGBA
-	Texture() *graphics.Texture
+	TextureAt(i int) *graphics.Texture
 	TextureRegionAt(i int) graphics.TextureRegion
 	ModelViewAt(i int) mathx.Aff3
 	OriginAt(i int) mathx.Vec2
 	ZOrderAt(i int) float64
 }
 
-func MakeVertices(mesh Mesh, batch Batch, vertices []Vertex) []Vertex {
+func instanceVertices(mesh *Mesh, batch Batch, lo, hi int, vertices []Vertex) []Vertex {
 	tmpv := make([]Vertex, len(mesh.Vertices))
 
-	for i := 0; i < batch.Len(); i++ {
+	for i := lo; i < hi; i++ {
 		modelview := batch.ModelViewAt(i)
 		region := batch.TextureRegionAt(i).Aff3()
 		rgba := batch.TintColorAt(i)
@@ -64,14 +64,18 @@ func MakeVertices(mesh Mesh, batch Batch, vertices []Vertex) []Vertex {
 }
 
 type Drawer struct {
-	verts   []Vertex
-	vbuffer *graphics.Buffer
-	vslice  *graphics.VertexSlice
-	mesh    Mesh
+	vertices []Vertex
+	vbuffer  *graphics.Buffer
+	vslice   *graphics.VertexSlice
+	mesh     *Mesh
 }
 
-func NewDrawer(maxinstances int, mesh Mesh) *Drawer {
-	vbuffer := graphics.NewBuffer(VertexFormat, maxinstances*len(mesh.Indices), nil)
+func NewDrawer(maxInstances int, mesh *Mesh) *Drawer {
+	if mesh == nil {
+		mesh = &Quad
+	}
+
+	vbuffer := graphics.NewBuffer(VertexFormat, maxInstances*len(mesh.Indices), nil)
 	vslice := graphics.NewVertexSlice(vbuffer)
 	return &Drawer{
 		vbuffer: vbuffer,
@@ -80,60 +84,45 @@ func NewDrawer(maxinstances int, mesh Mesh) *Drawer {
 	}
 }
 
-func (d *Drawer) Draw(batches ...Batch) {
-	if len(batches) > 1 {
-		d.drawBatches(batches)
-	} else if len(batches) == 1 {
-		d.drawBatch(batches[0])
+func (d *Drawer) Draw(batch Batch) {
+	if batch.Len() == 0 {
+		return
 	}
-}
 
-func (d *Drawer) drawBatches(batches []Batch) {
 	d.vslice.Begin()
 
-	for i := 0; i < len(batches); {
-		d.verts = MakeVertices(d.mesh, batches[i], d.verts[:0])
-		texture := batches[i].Texture()
-
-		for i = i + 1; i < len(batches); i++ {
-			if batches[i].Texture() != texture {
-				break
-			}
-
-			d.verts = MakeVertices(d.mesh, batches[i], d.verts)
+	lo, texture := 0, batch.TextureAt(0)
+	for hi := 1; hi < batch.Len(); hi++ {
+		hitexture := batch.TextureAt(hi)
+		if hitexture != texture {
+			d.vertices = instanceVertices(d.mesh, batch, lo, hi, d.vertices[:0])
+			texture.Begin()
+			d.drawVertices(d.mesh.DrawMode, d.vertices)
+			texture.End()
+			lo, texture = hi, hitexture
 		}
-
-		texture.Begin()
-		d.drawVertices(d.mesh.DrawMode, d.verts)
-		texture.End()
 	}
 
-	d.vslice.End()
-}
-
-func (d *Drawer) drawBatch(batch Batch) {
-	d.verts = MakeVertices(d.mesh, batch, d.verts[:0])
-	texture := batch.Texture()
-
-	d.vslice.Begin()
+	hi := batch.Len()
+	d.vertices = instanceVertices(d.mesh, batch, lo, hi, d.vertices[:0])
 	texture.Begin()
-	d.drawVertices(d.mesh.DrawMode, d.verts)
+	d.drawVertices(d.mesh.DrawMode, d.vertices)
 	texture.End()
+
 	d.vslice.End()
 }
 
 func (d *Drawer) drawVertices(mode gl.Enum, verts []Vertex) {
-	var indices []int
-	for i := 0; i < len(verts); i += d.vslice.Len() {
-		indices = append(indices, i)
-	}
-	indices = append(indices, len(verts))
-
-	for i := 1; i < len(indices); i++ {
-		lo := indices[i-1]
-		hi := indices[i-0]
+	lo, step := 0, d.vslice.Len()
+	for hi := step; hi < len(verts); hi += step {
 		vslice := d.vslice.Slice(0, hi-lo)
 		vslice.SetData(verts[lo:hi])
 		vslice.Draw(mode)
+		lo = hi
 	}
+
+	hi := len(verts)
+	vslice := d.vslice.Slice(0, hi-lo)
+	vslice.SetData(verts[lo:hi])
+	vslice.Draw(mode)
 }
