@@ -194,9 +194,9 @@ func (app *app) End() {
 	gl.ClearColor(0, 0, 0, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 	screen.End()
-	screen.BlitFrom(app.framebuffer,
-		app.viewport, app.framebuffer.Bounds(),
-		gl.Enum(gl.COLOR_BUFFER_BIT), graphics.FilterLinear)
+	app.framebuffer.BlitTo(&screen,
+		app.framebuffer.Bounds(), app.viewport,
+		gl.COLOR_BUFFER_BIT, graphics.FilterLinear)
 }
 
 func (app *app) Resolution() image.Point {

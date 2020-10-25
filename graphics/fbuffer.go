@@ -35,7 +35,7 @@ func (fbo *Framebuffer) Color() *Texture {
 	return fbo.color
 }
 
-func (dst *Framebuffer) BlitFrom(src *Framebuffer, dr, sr image.Rectangle, mask gl.Enum, filter Filter) {
+func (src *Framebuffer) BlitTo(dst *Framebuffer, sr, dr image.Rectangle, mask gl.Enum, filter Filter) {
 	gl.BlitNamedFramebuffer(src.id, dst.id, sr, dr, mask, filter.param())
 }
 
