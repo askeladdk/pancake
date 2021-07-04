@@ -45,19 +45,19 @@ void main()
 
 var Quad = Mesh{
 	Vertices: []Vertex{
-		Vertex{
+		{
 			XY: mathx.Vec2{-.5, -.5},
 			UV: mathx.Vec2{0, 0},
 		},
-		Vertex{
+		{
 			XY: mathx.Vec2{-.5, +.5},
 			UV: mathx.Vec2{0, 1},
 		},
-		Vertex{
+		{
 			XY: mathx.Vec2{+.5, -.5},
 			UV: mathx.Vec2{1, 0},
 		},
-		Vertex{
+		{
 			XY: mathx.Vec2{+.5, +.5},
 			UV: mathx.Vec2{1, 1},
 		},

@@ -18,8 +18,8 @@ func (s constError) Error() string {
 	return string(s)
 }
 
-// Quit signals that the event loop must end.
-const Quit = constError("quit application")
+// ErrQuit signals that the event loop must end.
+var ErrQuit error = constError("quit application")
 
 func makeInputFlags(action glfw.Action, mod glfw.ModifierKey) input.Flags {
 	var flags input.Flags
@@ -57,12 +57,13 @@ func makeWindow(opt Options) (*glfw.Window, error) {
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
 	glfw.WindowHint(glfw.DoubleBuffer, glfw.True)
-	if wnd, err := glfw.CreateWindow(opt.WindowSize.X, opt.WindowSize.Y, opt.Title, nil, nil); err != nil {
+	wnd, err := glfw.CreateWindow(opt.WindowSize.X, opt.WindowSize.Y, opt.Title, nil, nil)
+	if err != nil {
 		return nil, err
-	} else {
-		wnd.MakeContextCurrent()
-		return wnd, nil
 	}
+
+	wnd.MakeContextCurrent()
+	return wnd, nil
 }
 
 type App interface {
@@ -141,7 +142,7 @@ mainloop:
 			})
 
 			for _, inputEvent := range app.inputEvents {
-				if err := eventh(inputEvent); err == Quit {
+				if err := eventh(inputEvent); err == ErrQuit {
 					break mainloop
 				} else if err != nil {
 					return err
@@ -149,14 +150,14 @@ mainloop:
 			}
 			app.inputEvents = app.inputEvents[:0]
 
-			if err := eventh(FrameEvent{deltaTime}); err == Quit {
+			if err := eventh(FrameEvent{deltaTime}); err == ErrQuit {
 				break mainloop
 			} else if err != nil {
 				return err
 			}
 
 			// frame counter
-			frameRate += 1
+			frameRate++
 			ft1 := time.Now()
 			if ft1.Sub(ft0).Seconds() >= 1 {
 				app.frameRate, frameRate, ft0 = frameRate, 0, ft1
@@ -165,7 +166,7 @@ mainloop:
 
 		alpha := accumulator / deltaTime
 
-		if err := eventh(DrawEvent{alpha}); err == Quit {
+		if err := eventh(DrawEvent{alpha}); err == ErrQuit {
 			break mainloop
 		} else if err != nil {
 			return err
@@ -253,52 +254,65 @@ type Options struct {
 }
 
 func Main(opt Options, run func(App) error) error {
-	if err := glfw.Init(); err != nil {
-		return err
-	} else if window, err := makeWindow(opt); err != nil {
-		return err
-	} else if err := gl.Init(nil); err != nil {
-		return err
-	} else {
-		defer glfw.Terminate()
-
-		if opt.Resolution == (image.Point{}) {
-			opt.Resolution = opt.WindowSize
-		}
-
-		if opt.FrameRate <= 0 {
-			opt.FrameRate = 60
-		}
-
-		var err error
-		mainthread.Run(func() {
-			w, h := window.GetFramebufferSize()
-			viewport := logicalViewport(image.Point{w, h}, opt.Resolution)
-			framebuffer, _ := graphics.NewFramebuffer(viewport.Size(), graphics.FilterLinear, true)
-
-			a := app{
-				windowScale: w / opt.WindowSize.X,
-				window:      window,
-				deltaTime:   1 / float64(opt.FrameRate),
-				viewport:    viewport,
-				resolution:  opt.Resolution,
-				framebuffer: framebuffer,
-			}
-
-			window.SetKeyCallback(a.keyCallback)
-			window.SetCharCallback(a.charCallback)
-			window.SetCursorPosCallback(a.cursorCallback)
-			window.SetCursorEnterCallback(a.cursorEnterCallback)
-			window.SetMouseButtonCallback(a.mouseCallback)
-
-			gl.BindFramebuffer(gl.FRAMEBUFFER, gl.Framebuffer(0))
-
-			gl.Enable(gl.BLEND)
-			gl.BlendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
-
-			err = run(&a)
-		})
-
-		return err
+	if opt.Resolution == (image.Point{}) {
+		opt.Resolution = opt.WindowSize
 	}
+
+	if opt.FrameRate <= 0 {
+		opt.FrameRate = 60
+	}
+
+	var err error
+	mainthread.Run(func() {
+		var window *glfw.Window
+
+		if window, err = initglfw(opt); err != nil {
+			return
+		}
+
+		defer func() {
+			mainthread.Call(glfw.Terminate)
+		}()
+
+		w, h := window.GetFramebufferSize()
+		viewport := logicalViewport(image.Point{w, h}, opt.Resolution)
+		framebuffer, _ := graphics.NewFramebuffer(viewport.Size(), graphics.FilterLinear, true)
+
+		a := app{
+			windowScale: w / opt.WindowSize.X,
+			window:      window,
+			deltaTime:   1 / float64(opt.FrameRate),
+			viewport:    viewport,
+			resolution:  opt.Resolution,
+			framebuffer: framebuffer,
+		}
+
+		window.SetKeyCallback(a.keyCallback)
+		window.SetCharCallback(a.charCallback)
+		window.SetCursorPosCallback(a.cursorCallback)
+		window.SetCursorEnterCallback(a.cursorEnterCallback)
+		window.SetMouseButtonCallback(a.mouseCallback)
+
+		gl.BindFramebuffer(gl.FRAMEBUFFER, gl.Framebuffer(0))
+
+		gl.Enable(gl.BLEND)
+		gl.BlendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
+
+		err = run(&a)
+	})
+
+	return err
+}
+
+func initglfw(opt Options) (*glfw.Window, error) {
+	var window *glfw.Window
+	err := mainthread.CallErr(func() error {
+		if err := glfw.Init(); err != nil {
+			return err
+		} else if window, err = makeWindow(opt); err != nil {
+			return err
+		}
+		return gl.Init(nil)
+	})
+	return window, err
 }
