@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"image"
+	"runtime"
 
 	"github.com/askeladdk/pancake/input"
 	"github.com/askeladdk/pancake/mathx"
@@ -107,6 +108,10 @@ func run(app pancake.App) error {
 
 		return nil
 	})
+}
+
+func init() {
+	runtime.LockOSThread()
 }
 
 func main() {

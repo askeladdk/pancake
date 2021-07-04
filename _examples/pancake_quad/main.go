@@ -6,6 +6,7 @@ import (
 	"image/draw"
 	"image/png"
 	"os"
+	"runtime"
 
 	"github.com/askeladdk/pancake"
 	"github.com/askeladdk/pancake/graphics"
@@ -141,6 +142,10 @@ func run(app pancake.App) error {
 			return nil
 		})
 	}
+}
+
+func init() {
+	runtime.LockOSThread()
 }
 
 func main() {
