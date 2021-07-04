@@ -182,8 +182,6 @@ mainloop:
 func (app *app) Begin() {
 	app.framebuffer.Begin()
 	gl.Viewport(app.framebuffer.Bounds())
-	gl.ClearColor(0, 0, 0, 0)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT)
 }
 
 func (app *app) End() {
@@ -191,8 +189,6 @@ func (app *app) End() {
 	screen := graphics.Framebuffer{}
 	screen.Begin()
 	gl.Viewport(app.viewport)
-	gl.ClearColor(0, 0, 0, 0)
-	gl.Clear(gl.COLOR_BUFFER_BIT)
 	screen.End()
 	app.framebuffer.BlitTo(&screen,
 		app.framebuffer.Bounds(), app.viewport,

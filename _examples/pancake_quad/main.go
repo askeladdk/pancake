@@ -96,9 +96,6 @@ func run(app pancake.App) error {
 		ebo := graphics.NewIndexBufferUint8(indices)
 		vslice := graphics.NewIndexedVertexSlice(ebo, buffer)
 
-		gl.ClearColor(0, 0, 0, 0)
-		gl.Clear(gl.COLOR_BUFFER_BIT)
-
 		return app.Events(func(ev interface{}) error {
 			switch e := ev.(type) {
 			case pancake.QuitEvent:
