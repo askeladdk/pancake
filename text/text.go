@@ -8,56 +8,68 @@ import (
 	"github.com/askeladdk/pancake/mathx"
 )
 
+// Text represents the drawing state of text written in a Font.
+// It implements graphics2d.Batch.
 type Text struct {
-	Pos        mathx.Vec2
-	Dot        mathx.Vec2
-	Color      color.Color
-	Scale      float64
-	LineHeight float64
-	TabWidth   float64
+	// Pos is the base position of the text.
+	Pos mathx.Vec2
+
+	// Dot is the current position of the cursor.
+	Dot mathx.Vec2
+
+	// TintColor is the font color.
+	TintColor color.Color
+
+	// Scale scales the entire text.
+	Scale float64
+
+	// TabWidth is the the space in pixels of the tab character.
+	// Defaults to four times the width of the space character.
+	TabWidth float64
+
+	// ZOrder is the Z order.
+	ZOrder float64
 
 	modelview []mathx.Aff3
 	region    []graphics.TextureRegion
-	buffer    []byte
-	font      Font
+	font      *Font
 	lastRune  rune
 }
 
-func NewText(font Font) *Text {
+// NewText creates a new Text batch based on a Font.
+func NewText(font *Font) *Text {
 	return &Text{
-		Color:      color.RGBA{255, 255, 255, 255},
-		LineHeight: font.LineHeight(),
-		TabWidth:   font.Glyph(' ').Advance * 4,
-		Scale:      1,
-		font:       font,
-		lastRune:   -1,
+		TintColor: color.RGBA{255, 255, 255, 255},
+		TabWidth:  font.Glyph(' ').Advance * 4,
+		Scale:     1,
+		font:      font,
 	}
 }
 
-func (t *Text) Clear() {
+// Reset clears the Text.
+func (t *Text) Reset() {
 	t.Dot = mathx.Vec2{}
 	t.modelview = t.modelview[:0]
 	t.region = t.region[:0]
-	t.buffer = t.buffer[:0]
-	t.lastRune = -1
+	t.lastRune = 0
 }
 
+// Write implements io.Writer.
 func (t *Text) Write(p []byte) (int, error) {
-	t.buffer = append(t.buffer, p...)
-	t.draw()
+	t.draw(p)
 	return len(p), nil
 }
 
+// WriteString implements io.StringWriter.
 func (t *Text) WriteString(s string) (int, error) {
-	t.buffer = append(t.buffer, s...)
-	t.draw()
+	t.Write([]byte(s))
 	return len(s), nil
 }
 
-func (t *Text) draw() {
-	for utf8.FullRune(t.buffer) {
-		r, size := utf8.DecodeRune(t.buffer)
-		t.buffer = t.buffer[size:]
+func (t *Text) draw(buf []byte) {
+	for utf8.FullRune(buf) {
+		r, size := utf8.DecodeRune(buf)
+		buf = buf[size:]
 
 		switch r {
 		case '\n':
@@ -82,7 +94,7 @@ func (t *Text) draw() {
 		t.region = append(t.region, glyph.Region)
 
 		advance := glyph.Advance
-		if t.lastRune >= 0 {
+		if t.lastRune > 0 {
 			advance += t.font.Kern(t.lastRune, r)
 		}
 
@@ -99,7 +111,7 @@ func (t *Text) Len() int {
 
 // TintColorAt implements graphics2d.Batch.
 func (t *Text) TintColorAt(i int) color.Color {
-	return t.Color
+	return t.TintColor
 }
 
 // TextureAt implements graphics2d.Batch.
@@ -119,10 +131,10 @@ func (t *Text) ModelViewAt(i int) mathx.Aff3 {
 
 // OriginAt implements graphics2d.Batch.
 func (t *Text) OriginAt(i int) mathx.Vec2 {
-	return mathx.Vec2{-.5, -.5}
+	return mathx.Vec2{-.5, -.5} // top left corner
 }
 
 // ZOrderAt implements graphics2d.Batch.
 func (t *Text) ZOrderAt(i int) float64 {
-	return 0
+	return t.ZOrder
 }

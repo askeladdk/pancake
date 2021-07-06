@@ -3,7 +3,6 @@ package text
 import (
 	"image"
 	"image/draw"
-	"sort"
 	"unicode"
 
 	"github.com/askeladdk/pancake/mathx"
@@ -13,53 +12,58 @@ import (
 	"golang.org/x/image/math/fixed"
 )
 
-var ASCII = []rune(" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~")
+// ASCII is the set of all printable ASCII characters and the replacement character.
+var ASCII = &unicode.RangeTable{
+	LatinOffset: 1,
+	R16: []unicode.Range16{
+		{Lo: ' ', Hi: '~', Stride: 1},
+		{Lo: 0xFFFD, Hi: 0xFFFD, Stride: 1},
+	},
+}
 
 func fixedToFloat64(x fixed.Int26_6) float64 {
 	return float64(x) / (1 << 6)
 }
 
-func combineRuneSets(runeSets [][]rune) []rune {
-	seen := map[rune]struct{}{}
-	runes := []rune{unicode.ReplacementChar}
-	for _, set := range runeSets {
-		for _, r := range set {
-			if _, ok := seen[r]; !ok {
-				runes = append(runes, r)
-				seen[r] = struct{}{}
-			}
+func rangeTableToRunes(rangeTab *unicode.RangeTable) []rune {
+	var runes []rune
+	for _, r16 := range rangeTab.R16 {
+		for c := r16.Lo; c <= r16.Hi; c += r16.Stride {
+			runes = append(runes, rune(c))
 		}
 	}
-
-	sort.Slice(runes, func(i, j int) bool {
-		return runes[i] < runes[j]
-	})
-
+	for _, r32 := range rangeTab.R32 {
+		for c := r32.Lo; c <= r32.Hi; c += r32.Stride {
+			runes = append(runes, rune(c))
+		}
+	}
 	return runes
 }
 
-type Font interface {
-	Texture() *graphics.Texture
-	Glyph(r rune) Glyph
-	LineHeight() float64
-	Kern(r0, r1 rune) float64
-}
-
+// Glyph represents a character in a Face.
 type Glyph struct {
-	Region  graphics.TextureRegion
-	Scale   mathx.Vec2
+	// Region is the rectangular area of the font texture that contains the glyph.
+	Region graphics.TextureRegion
+
+	// Scale is the size of the character.
+	Scale mathx.Vec2
+
+	// Advance is the number of pixels to advance horizontally to the character.
 	Advance float64
 }
 
-type faceFont struct {
+// Font is a renderable font.Font.
+type Font struct {
 	face       font.Face
 	texture    *graphics.Texture
 	mapping    map[rune]Glyph
 	lineHeight float64
 }
 
-func NewFontFromFace(face font.Face, runeSets ...[]rune) Font {
-	runes := combineRuneSets(runeSets)
+// NewFont creates a new Font from a font.Face by building a texture atlas
+// containing all characters in the range table.
+func NewFont(face font.Face, rangeTab *unicode.RangeTable) *Font {
+	runes := rangeTableToRunes(rangeTab)
 
 	metrics := face.Metrics()
 	padding := fixed.I(2)
@@ -68,7 +72,6 @@ func NewFontFromFace(face font.Face, runeSets ...[]rune) Font {
 	for _, r := range runes {
 		if b, _, ok := face.GlyphBounds(r); ok {
 			width += fixed.I((b.Max.X - b.Min.X).Ceil())
-			// width = width.Ceil())
 			width += padding
 		}
 	}
@@ -104,12 +107,11 @@ func NewFontFromFace(face font.Face, runeSets ...[]rune) Font {
 			draw.Draw(rgba, dr, mask, maskp, draw.Src)
 
 			dot.X += fixed.I((b.Max.X - b.Min.X).Ceil())
-			// dot.X = fixed.I(dot.X.Ceil())
 			dot.X += padding
 		}
 	}
 
-	return &faceFont{
+	return &Font{
 		face:       face,
 		mapping:    mapping,
 		texture:    graphics.NewTextureFromImage(rgba, graphics.FilterLinear),
@@ -117,24 +119,30 @@ func NewFontFromFace(face font.Face, runeSets ...[]rune) Font {
 	}
 }
 
-func (ttf *faceFont) Texture() *graphics.Texture {
-	return ttf.texture
+// Face returns the source font.Face.
+func (fnt *Font) Face() font.Face {
+	return fnt.face
 }
 
-func (ttf *faceFont) Glyph(r rune) Glyph {
-	if glyph, ok := ttf.mapping[r]; ok {
+// Texture returns the texture atlas that contains all glyphs.
+func (fnt *Font) Texture() *graphics.Texture {
+	return fnt.texture
+}
+
+// Glyph returns the glyph associated with a rune.
+func (fnt *Font) Glyph(r rune) Glyph {
+	if glyph, ok := fnt.mapping[r]; ok {
 		return glyph
-	} else if glyph, ok := ttf.mapping[unicode.ReplacementChar]; ok {
-		return glyph
-	} else {
-		return Glyph{}
 	}
+	return fnt.mapping[unicode.ReplacementChar]
 }
 
-func (ttf *faceFont) LineHeight() float64 {
-	return ttf.lineHeight
+// LineHeight reports the font line height in pixels.
+func (fnt *Font) LineHeight() float64 {
+	return fnt.lineHeight
 }
 
-func (ttf *faceFont) Kern(r0, r1 rune) float64 {
-	return float64(ttf.face.Kern(r0, r1).Ceil())
+// Kern reports the kerning distance in pixels between two runes.
+func (fnt *Font) Kern(r0, r1 rune) float64 {
+	return float64(fnt.face.Kern(r0, r1).Ceil())
 }
