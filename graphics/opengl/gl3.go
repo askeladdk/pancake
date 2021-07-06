@@ -9,8 +9,8 @@ import (
 	"unsafe"
 
 	"github.com/askeladdk/pancake/mathx"
-	"github.com/faiface/mainthread"
 	"github.com/go-gl/gl/v3.3-core/gl"
+	"golang.design/x/mainthread"
 )
 
 func Init(param interface{}) error {
@@ -32,7 +32,7 @@ func CreateBuffer() Buffer {
 }
 
 func DeleteBuffer(buffer Buffer) {
-	mainthread.CallNonBlock(func() {
+	mainthread.Go(func() {
 		gl.DeleteBuffers(1, (*uint32)(&buffer))
 	})
 }
@@ -52,7 +52,7 @@ func CreateFramebuffer() Framebuffer {
 }
 
 func DeleteFramebuffer(frame Framebuffer) {
-	mainthread.CallNonBlock(func() {
+	mainthread.Go(func() {
 		gl.DeleteFramebuffers(1, (*uint32)(&frame))
 
 	})
@@ -73,7 +73,7 @@ func CreateRenderbuffer() Renderbuffer {
 }
 
 func DeleteRenderbuffer(rbuf Renderbuffer) {
-	mainthread.CallNonBlock(func() {
+	mainthread.Go(func() {
 		gl.GenRenderbuffers(1, (*uint32)(&rbuf))
 	})
 }
@@ -93,7 +93,7 @@ func CreateTexture() Texture {
 }
 
 func DeleteTexture(texture Texture) {
-	mainthread.CallNonBlock(func() {
+	mainthread.Go(func() {
 		gl.DeleteTextures(1, (*uint32)(&texture))
 	})
 }
@@ -113,7 +113,7 @@ func CreateVertexArray() VertexArray {
 }
 
 func DeleteVertexArray(array VertexArray) {
-	mainthread.CallNonBlock(func() {
+	mainthread.Go(func() {
 		gl.DeleteVertexArrays(1, (*uint32)(&array))
 	})
 }
@@ -133,7 +133,7 @@ func CreateProgram() Program {
 }
 
 func DeleteProgram(program Program) {
-	mainthread.CallNonBlock(func() {
+	mainthread.Go(func() {
 		gl.DeleteProgram(uint32(program))
 	})
 }
@@ -147,7 +147,7 @@ func CreateShader(xtype Enum) Shader {
 }
 
 func DeleteShader(shader Shader) {
-	mainthread.CallNonBlock(func() {
+	mainthread.Go(func() {
 		gl.DeleteShader(uint32(shader))
 	})
 }

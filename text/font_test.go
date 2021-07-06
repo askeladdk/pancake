@@ -3,7 +3,6 @@ package text
 import (
 	"image"
 	"os"
-	"runtime"
 	"testing"
 	"unicode"
 
@@ -12,7 +11,6 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	runtime.LockOSThread()
 	pancake.Main(pancake.Options{
 		WindowSize: image.Point{320, 200},
 	}, func(_ pancake.App) error {

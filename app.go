@@ -8,8 +8,8 @@ import (
 
 	gl "github.com/askeladdk/pancake/graphics/opengl"
 	"github.com/askeladdk/pancake/input"
-	"github.com/faiface/mainthread"
 	"github.com/go-gl/glfw/v3.3/glfw"
+	"golang.design/x/mainthread"
 )
 
 type constError string
@@ -137,9 +137,7 @@ mainloop:
 				app.inputEvents = append(app.inputEvents, QuitEvent{})
 			}
 
-			mainthread.Call(func() {
-				glfw.PollEvents()
-			})
+			mainthread.Call(glfw.PollEvents)
 
 			for _, inputEvent := range app.inputEvents {
 				if err := eventh(inputEvent); err == ErrQuit {
@@ -172,9 +170,7 @@ mainloop:
 			return err
 		}
 
-		mainthread.Call(func() {
-			app.window.SwapBuffers()
-		})
+		mainthread.Call(app.window.SwapBuffers)
 	}
 
 	return nil
@@ -263,7 +259,7 @@ func Main(opt Options, run func(App) error) error {
 	}
 
 	var err error
-	mainthread.Run(func() {
+	mainthread.Init(func() {
 		var window *glfw.Window
 
 		if window, err = initglfw(opt); err != nil {
@@ -306,13 +302,14 @@ func Main(opt Options, run func(App) error) error {
 
 func initglfw(opt Options) (*glfw.Window, error) {
 	var window *glfw.Window
-	err := mainthread.CallErr(func() error {
-		if err := glfw.Init(); err != nil {
-			return err
+	var err error
+	mainthread.Call(func() {
+		if err = glfw.Init(); err != nil {
+			return
 		} else if window, err = makeWindow(opt); err != nil {
-			return err
+			return
 		}
-		return gl.Init(nil)
+		err = gl.Init(nil)
 	})
 	return window, err
 }
