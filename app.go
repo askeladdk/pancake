@@ -63,14 +63,30 @@ func makeWindow(opt Options) (*glfw.Window, error) {
 	return wnd, nil
 }
 
+// App is the window and event handling context.
 type App interface {
+	// Scissor creates a Scissor that is scaled to the window viewport.
 	Scissor(r image.Rectangle) Scissor
+
+	// Resolution reports the logical resolution.
 	Resolution() image.Point
+
+	// Framebuffer returns the window Framebuffer.
 	Framebuffer() *Framebuffer
+
+	// FrameRate reports the current framerate.
 	FrameRate() int
+
+	// SetTitle sets the window title.
 	SetTitle(string)
+
+	// Events handles events.
 	Events(func(interface{}) error) error
+
+	// Begin binds the framebuffer and set the viewport.
 	Begin()
+
+	// End blits the framebuffer to the screen.
 	End()
 }
 
@@ -239,13 +255,20 @@ func (app *app) mouseCallback(_ *glfw.Window, button glfw.MouseButton, action gl
 	}
 }
 
+// Options specifies window options.
 type Options struct {
+	// WindowSize is the size of the window.
 	WindowSize image.Point
+	// Resolution is the logical resolution in pixels.
+	// Can be smaller than WindowSize.
 	Resolution image.Point
-	Title      string
-	FrameRate  int
+	// Title is the window title.
+	Title string
+	// FrameRate is the target frame rate.
+	FrameRate int
 }
 
+// Main initializes the window and starts the event loop.
 func Main(opt Options, run func(App) error) error {
 	if opt.Resolution == (image.Point{}) {
 		opt.Resolution = opt.WindowSize
