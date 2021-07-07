@@ -1,14 +1,26 @@
-package text
+package pancake2d
 
 import (
 	"fmt"
+	"image"
+	"os"
 	"testing"
 
+	"github.com/askeladdk/pancake"
 	"golang.org/x/image/font/basicfont"
 )
 
+func TestMain(m *testing.M) {
+	pancake.Main(pancake.Options{
+		WindowSize: image.Point{320, 200},
+	}, func(_ pancake.App) error {
+		os.Exit(m.Run())
+		return nil
+	})
+}
+
 func TestNewText(t *testing.T) {
-	font := NewFont(basicfont.Face7x13, ASCII)
+	font := pancake.NewFont(basicfont.Face7x13, pancake.ASCII)
 	text := NewText(font)
 	fmt.Fprintf(text, "hello\r\n\t")
 	text.WriteString("world")

@@ -2,8 +2,6 @@ package pancake
 
 import (
 	"image"
-
-	"github.com/askeladdk/pancake/input"
 )
 
 type QuitEvent struct{}
@@ -13,15 +11,15 @@ type CharEvent struct {
 }
 
 type KeyEvent struct {
-	Key      input.Key
-	Flags    input.Flags
-	Scancode int
+	Key       Key
+	Modifiers Modifiers
+	Scancode  int
 }
 
 type MouseEvent struct {
-	Button   input.MouseButton
-	Flags    input.Flags
-	Position image.Point
+	Button    MouseButton
+	Modifiers Modifiers
+	Position  image.Point
 }
 
 type MouseMoveEvent struct {

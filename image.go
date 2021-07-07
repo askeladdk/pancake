@@ -1,4 +1,4 @@
-package graphics
+package pancake
 
 import (
 	"image"

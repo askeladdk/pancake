@@ -1,11 +1,11 @@
-package graphics
+package pancake
 
 import (
 	"errors"
 	"runtime"
 	"unsafe"
 
-	gl "github.com/askeladdk/pancake/graphics/opengl"
+	gl "github.com/askeladdk/pancake/opengl"
 )
 
 var ebobinder = newBinder(func(id uint32) {
@@ -33,9 +33,9 @@ func (ebo *IndexBuffer) Len() int {
 func (ebo *IndexBuffer) Draw(mode gl.Enum, i, j int) {
 	if j > i && i >= 0 && j <= ebo.count {
 		gl.DrawElements(mode, j-i, ebo.xtype, i)
-	} else {
-		panic(errors.New("range out of bounds"))
+		return
 	}
+	panic(errors.New("range out of bounds"))
 }
 
 func (ebo *IndexBuffer) delete() {

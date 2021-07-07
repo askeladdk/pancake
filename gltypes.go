@@ -1,20 +1,20 @@
-package graphics
+package pancake
 
 import (
 	"errors"
 	"fmt"
 
-	gl "github.com/askeladdk/pancake/graphics/opengl"
+	gl "github.com/askeladdk/pancake/opengl"
 )
 
-type Filter uint32
+type TextureFilter uint32
 
 const (
-	FilterLinear Filter = iota
+	FilterLinear TextureFilter = iota
 	FilterNearest
 )
 
-func (filter Filter) param() gl.Enum {
+func (filter TextureFilter) param() gl.Enum {
 	switch filter {
 	case FilterLinear:
 		return gl.LINEAR
@@ -72,89 +72,89 @@ func (format ColorFormat) pixelSize() int {
 	}
 }
 
-type AttribType uint32
+type Attrib uint32
 
 const (
-	Float32 AttribType = iota
-	Float64
-	Vec2
-	Vec3
-	Vec4
-	Mat3
-	Mat4
-	Byte4
+	AttribFloat32 Attrib = iota
+	AttribFloat64
+	AttribVec2
+	AttribVec3
+	AttribVec4
+	AttribMat3
+	AttribMat4
+	AttribByte4
 )
 
-func (atype AttribType) components() int {
+func (atype Attrib) components() int {
 	switch atype {
-	case Float32:
+	case AttribFloat32:
 		return 1
-	case Float64:
+	case AttribFloat64:
 		return 1
-	case Vec2:
+	case AttribVec2:
 		return 2
-	case Vec3:
+	case AttribVec3:
 		return 3
-	case Vec4:
+	case AttribVec4:
 		return 4
-	case Mat3:
+	case AttribMat3:
 		return 3
-	case Mat4:
+	case AttribMat4:
 		return 4
-	case Byte4:
+	case AttribByte4:
 		return 4
 	default:
 		panic(fmt.Errorf("invalid attribute type"))
 	}
 }
 
-func (atype AttribType) repeat() int {
+func (atype Attrib) repeat() int {
 	switch atype {
-	case Mat3:
+	case AttribMat3:
 		return 3
-	case Mat4:
+	case AttribMat4:
 		return 4
 	default:
 		return 1
 	}
 }
 
-func (atype AttribType) bytes() int {
+func (atype Attrib) bytes() int {
 	switch atype {
-	case Byte4:
+	case AttribByte4:
 		return 1
-	case Float32:
+	case AttribFloat32:
 		return 4
 	default:
 		return 8
 	}
 }
 
-func (atype AttribType) xtype() gl.Enum {
+func (atype Attrib) xtype() gl.Enum {
 	switch atype {
-	case Byte4:
+	case AttribByte4:
 		return gl.UNSIGNED_BYTE
-	case Float32:
+	case AttribFloat32:
 		return gl.FLOAT
 	default:
 		return gl.DOUBLE
 	}
 }
 
-func (atype AttribType) normalised() bool {
+func (atype Attrib) normalised() bool {
 	switch atype {
-	case Byte4:
+	case AttribByte4:
 		return true
 	default:
 		return false
 	}
 }
 
-func (atype AttribType) stride() int {
+func (atype Attrib) stride() int {
 	return atype.bytes() * atype.components()
 }
 
-type AttribFormat []AttribType
+type AttribFormat []Attrib
 
 func (aformat AttribFormat) stride() int {
 	var stride int

@@ -1,9 +1,9 @@
-package graphics
+package pancake
 
 import (
 	"image"
 
-	gl "github.com/askeladdk/pancake/graphics/opengl"
+	gl "github.com/askeladdk/pancake/opengl"
 )
 
 // Scissor represents a rectangular area of the screen
@@ -12,8 +12,8 @@ import (
 // always be balanced for the stack to work properly.
 //
 // Scissor is a type alias of image.Rectangle and can be created as follows:
-//  graphics.Scissor(image.Rect(x0, y0, x1, y1))
-//  graphics.Scissor(image.Point{x0, y0}, image.Point{x1, y1})
+//  pancake.Scissor(image.Rect(x0, y0, x1, y1))
+//  pancake.Scissor(image.Point{x0, y0}, image.Point{x1, y1})
 //
 // To apply a Scissor:
 //  scissor.Begin()
@@ -21,9 +21,9 @@ import (
 //  scissor.End()
 //
 // The special scissor ZeroScissor disables scissoring:
-//  graphics.ZeroScissor.Begin()
+//  pancake.ZeroScissor.Begin()
 //  ... (no clipping here)
-//  graphics.ZeroScissor.End()
+//  pancake.ZeroScissor.End()
 type Scissor image.Rectangle
 
 type scissorStack struct {
@@ -36,12 +36,12 @@ var scissorstack = &scissorStack{}
 // ZeroScissor represents the absence of clipping.
 var ZeroScissor = Scissor(image.Rectangle{})
 
-// Applies the scissor.
+// Begin applies the scissor.
 func (s Scissor) Begin() {
 	scissorstack.push(s)
 }
 
-// Re-applies the previous scissor.
+// End re-applies the previous scissor.
 func (s Scissor) End() {
 	scissorstack.pop()
 }

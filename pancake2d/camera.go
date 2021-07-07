@@ -1,4 +1,4 @@
-package graphics2d
+package pancake2d
 
 import (
 	"image"

@@ -8,10 +8,8 @@ import (
 	"os"
 
 	"github.com/askeladdk/pancake"
-	"github.com/askeladdk/pancake/graphics"
-	gl "github.com/askeladdk/pancake/graphics/opengl"
-	"github.com/askeladdk/pancake/input"
 	"github.com/askeladdk/pancake/mathx"
+	gl "github.com/askeladdk/pancake/opengl"
 )
 
 var vshader = `
@@ -64,9 +62,9 @@ var vertices = []float64{
 
 var indices = []uint8{0, 1, 2, 1, 2, 3}
 
-var quadFormat = graphics.AttribFormat{
-	graphics.Vec2, // x, y
-	graphics.Vec2, // u, v
+var quadFormat = pancake.AttribFormat{
+	pancake.AttribVec2, // x, y
+	pancake.AttribVec2, // u, v
 }
 
 func loadImage(path string) (*image.NRGBA, error) {
@@ -84,24 +82,24 @@ func loadImage(path string) (*image.NRGBA, error) {
 func run(app pancake.App) error {
 	fmt.Println(gl.GetString(gl.VERSION))
 
-	if program, err := graphics.NewShaderProgram(vshader, fshader); err != nil {
+	if program, err := pancake.NewShaderProgram(vshader, fshader); err != nil {
 		return err
 	} else if img, err := loadImage("gamer-gopher.png"); err != nil {
 		return err
 	} else {
 		// drawing variables
-		texture := graphics.NewTexture(
-			img.Bounds().Size(), graphics.FilterLinear, graphics.ColorFormatRGBA, img.Pix)
-		buffer := graphics.NewBuffer(quadFormat, 6, vertices)
-		ebo := graphics.NewIndexBufferUint8(indices)
-		vslice := graphics.NewIndexedVertexSlice(ebo, buffer)
+		texture := pancake.NewTexture(
+			img.Bounds().Size(), pancake.FilterLinear, pancake.ColorFormatRGBA, img.Pix)
+		buffer := pancake.NewVertexBuffer(quadFormat, 6, vertices)
+		ebo := pancake.NewIndexBufferUint8(indices)
+		vslice := pancake.NewIndexedVertexArraySlice(ebo, buffer)
 
 		return app.Events(func(ev interface{}) error {
 			switch e := ev.(type) {
 			case pancake.QuitEvent:
 				return pancake.ErrQuit
 			case pancake.KeyEvent:
-				if e.Flags.Pressed() && e.Key == input.KeyEscape {
+				if e.Modifiers.Pressed() && e.Key == pancake.KeyEscape {
 					return pancake.ErrQuit
 				}
 			case pancake.DrawEvent:

@@ -1,4 +1,4 @@
-package text
+package pancake
 
 import (
 	"image"
@@ -6,8 +6,6 @@ import (
 	"unicode"
 
 	"github.com/askeladdk/pancake/mathx"
-
-	"github.com/askeladdk/pancake/graphics"
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
 )
@@ -43,7 +41,7 @@ func rangeTableToRunes(rangeTab *unicode.RangeTable) []rune {
 // Glyph represents a character in a Face.
 type Glyph struct {
 	// Region is the rectangular area of the font texture that contains the glyph.
-	Region graphics.TextureRegion
+	Region TextureRegion
 
 	// Scale is the size of the character.
 	Scale mathx.Vec2
@@ -55,7 +53,7 @@ type Glyph struct {
 // Font is a renderable font.Font.
 type Font struct {
 	face       font.Face
-	texture    *graphics.Texture
+	texture    *Texture
 	mapping    map[rune]Glyph
 	lineHeight float64
 }
@@ -98,7 +96,7 @@ func NewFont(face font.Face, rangeTab *unicode.RangeTable) *Font {
 			}
 
 			mapping[r] = Glyph{
-				Region:  graphics.NewTextureRegion(imageSize, region),
+				Region:  NewTextureRegion(imageSize, region),
 				Scale:   mathx.Vec2{float64(w), float64(h)},
 				Advance: fixedToFloat64(a),
 			}
@@ -114,7 +112,7 @@ func NewFont(face font.Face, rangeTab *unicode.RangeTable) *Font {
 	return &Font{
 		face:       face,
 		mapping:    mapping,
-		texture:    graphics.NewTextureFromImage(rgba, graphics.FilterLinear),
+		texture:    NewTextureFromImage(rgba, FilterLinear),
 		lineHeight: float64(face.Metrics().Height.Ceil()),
 	}
 }
@@ -125,7 +123,7 @@ func (fnt *Font) Face() font.Face {
 }
 
 // Texture returns the texture atlas that contains all glyphs.
-func (fnt *Font) Texture() *graphics.Texture {
+func (fnt *Font) Texture() *Texture {
 	return fnt.texture
 }
 

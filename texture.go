@@ -1,4 +1,4 @@
-package graphics
+package pancake
 
 import (
 	"errors"
@@ -8,19 +8,20 @@ import (
 
 	"github.com/askeladdk/pancake/mathx"
 
-	gl "github.com/askeladdk/pancake/graphics/opengl"
+	gl "github.com/askeladdk/pancake/opengl"
 )
 
 const (
-	TextureUnitsCount = 48 // Minimum number of Texture units according to the spec.
+	// TextureUnitsCount is the minimum number of Texture units according to the spec.
+	TextureUnitsCount = 48
 )
 
 var texbinders = func(n uint32) []*binder {
 	var binders []*binder
 	for i := uint32(0); i < n; i++ {
-		x := i // gotcha
+		i := i // gotcha
 		binders = append(binders, newBinder(func(id uint32) {
-			gl.ActiveTexture(gl.Enum(gl.TEXTURE0 + x))
+			gl.ActiveTexture(gl.Enum(gl.TEXTURE0 + i))
 			gl.BindTexture(gl.TEXTURE_2D, gl.Texture(id))
 		}))
 	}
@@ -127,7 +128,7 @@ func (tex *Texture) delete() {
 	gl.DeleteTexture(tex.id)
 }
 
-func NewTexture(size image.Point, filter Filter, format ColorFormat, pixels []byte) *Texture {
+func NewTexture(size image.Point, filter TextureFilter, format ColorFormat, pixels []byte) *Texture {
 	tex := &Texture{
 		id:     gl.CreateTexture(),
 		size:   size,
@@ -170,7 +171,7 @@ func imagePix(img image.Image) ([]uint8, ColorFormat) {
 	}
 }
 
-func NewTextureFromImage(img image.Image, filter Filter) *Texture {
+func NewTextureFromImage(img image.Image, filter TextureFilter) *Texture {
 	pix, format := imagePix(img)
 	return NewTexture(img.Bounds().Size(), filter, format, pix)
 }

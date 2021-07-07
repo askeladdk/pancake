@@ -1,11 +1,11 @@
-package graphics
+package pancake
 
 import (
 	"errors"
 	"image"
 	"runtime"
 
-	gl "github.com/askeladdk/pancake/graphics/opengl"
+	gl "github.com/askeladdk/pancake/opengl"
 )
 
 var fbobinder = newBinder(func(id uint32) {
@@ -35,7 +35,7 @@ func (fbo *Framebuffer) Color() *Texture {
 	return fbo.color
 }
 
-func (src *Framebuffer) BlitTo(dst *Framebuffer, sr, dr image.Rectangle, mask gl.Enum, filter Filter) {
+func (src *Framebuffer) BlitTo(dst *Framebuffer, sr, dr image.Rectangle, mask gl.Enum, filter TextureFilter) {
 	gl.BlitNamedFramebuffer(src.id, dst.id, sr, dr, mask, filter.param())
 }
 
@@ -69,12 +69,11 @@ func NewFramebufferFromTexture(color *Texture, depthStencil bool) (*Framebuffer,
 
 	if code := gl.CheckFramebufferStatus(); code != gl.FRAMEBUFFER_COMPLETE {
 		return nil, errors.New(errorToString(code))
-	} else {
-		return fbo, nil
 	}
+	return fbo, nil
 }
 
-func NewFramebuffer(size image.Point, filter Filter, depthStencil bool) (*Framebuffer, error) {
+func NewFramebuffer(size image.Point, filter TextureFilter, depthStencil bool) (*Framebuffer, error) {
 	color := NewTexture(size, filter, ColorFormatRGBA, nil)
 	return NewFramebufferFromTexture(color, depthStencil)
 }

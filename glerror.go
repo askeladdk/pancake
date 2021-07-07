@@ -1,9 +1,9 @@
-package graphics
+package pancake
 
 import (
 	"fmt"
 
-	gl "github.com/askeladdk/pancake/graphics/opengl"
+	gl "github.com/askeladdk/pancake/opengl"
 )
 
 // GL_NO_ERROR
@@ -61,9 +61,8 @@ func errorToString(code gl.Enum) string {
 func checkError() error {
 	if code := gl.GetError(); code != gl.NO_ERROR {
 		return fmt.Errorf(errorToString(code))
-	} else {
-		return nil
 	}
+	return nil
 }
 
 func panicError() {

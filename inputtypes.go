@@ -1,55 +1,55 @@
-package input
+package pancake
 
 import (
 	"fmt"
 )
 
-type Flags uint
+type Modifiers uint
 
 const (
-	Pressed Flags = 1 << iota
-	Released
-	Repeated
-	Shift
-	Control
-	Alt
-	Super
+	ModPressed Modifiers = 1 << iota
+	ModReleased
+	ModRepeated
+	ModShift
+	ModControl
+	ModAlt
+	ModSuper
 )
 
-func (f Flags) String() string {
+func (f Modifiers) String() string {
 	return fmt.Sprintf("%08b", f)
 }
 
-func (flags Flags) Pressed() bool {
-	return flags&Pressed != 0
+func (flags Modifiers) Pressed() bool {
+	return flags&ModPressed != 0
 }
 
-func (flags Flags) Released() bool {
-	return flags&Released != 0
+func (flags Modifiers) Released() bool {
+	return flags&ModReleased != 0
 }
 
-func (flags Flags) Repeated() bool {
-	return flags&Repeated != 0
+func (flags Modifiers) Repeated() bool {
+	return flags&ModRepeated != 0
 }
 
-func (flags Flags) Shift() bool {
-	return flags&Shift != 0
+func (flags Modifiers) Shift() bool {
+	return flags&ModShift != 0
 }
 
-func (flags Flags) Control() bool {
-	return flags&Control != 0
+func (flags Modifiers) Control() bool {
+	return flags&ModControl != 0
 }
 
-func (flags Flags) Alt() bool {
-	return flags&Alt != 0
+func (flags Modifiers) Alt() bool {
+	return flags&ModAlt != 0
 }
 
-func (flags Flags) Super() bool {
-	return flags&Super != 0
+func (flags Modifiers) Super() bool {
+	return flags&ModSuper != 0
 }
 
-func (flags Flags) Down() bool {
-	return flags&(Pressed|Repeated) != 0
+func (flags Modifiers) Down() bool {
+	return flags&(ModPressed|ModRepeated) != 0
 }
 
 type MouseButton int

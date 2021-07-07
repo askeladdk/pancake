@@ -4,10 +4,7 @@ import (
 	"image"
 	"time"
 
-	"github.com/askeladdk/pancake/graphics"
-
-	gl "github.com/askeladdk/pancake/graphics/opengl"
-	"github.com/askeladdk/pancake/input"
+	gl "github.com/askeladdk/pancake/opengl"
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"golang.design/x/mainthread"
 )
@@ -21,30 +18,30 @@ func (s constError) Error() string {
 // ErrQuit signals that the event loop must end.
 var ErrQuit error = constError("quit application")
 
-func makeInputFlags(action glfw.Action, mod glfw.ModifierKey) input.Flags {
-	var flags input.Flags
+func makeInputFlags(action glfw.Action, mod glfw.ModifierKey) Modifiers {
+	var flags Modifiers
 	if action == glfw.Press {
-		flags |= input.Pressed
+		flags |= ModPressed
 	} else if action == glfw.Release {
-		flags |= input.Released
+		flags |= ModReleased
 	} else if action == glfw.Repeat {
-		flags |= input.Repeated
+		flags |= ModRepeated
 	}
 
 	if mod&glfw.ModAlt != 0 {
-		flags |= input.Alt
+		flags |= ModAlt
 	}
 
 	if mod&glfw.ModControl != 0 {
-		flags |= input.Control
+		flags |= ModControl
 	}
 
 	if mod&glfw.ModShift != 0 {
-		flags |= input.Shift
+		flags |= ModShift
 	}
 
 	if mod&glfw.ModSuper != 0 {
-		flags |= input.Super
+		flags |= ModSuper
 	}
 
 	return flags
@@ -67,9 +64,9 @@ func makeWindow(opt Options) (*glfw.Window, error) {
 }
 
 type App interface {
-	Scissor(r image.Rectangle) graphics.Scissor
+	Scissor(r image.Rectangle) Scissor
 	Resolution() image.Point
-	Framebuffer() *graphics.Framebuffer
+	Framebuffer() *Framebuffer
 	FrameRate() int
 	SetTitle(string)
 	Events(func(interface{}) error) error
@@ -82,7 +79,7 @@ type app struct {
 	resolution    image.Point
 	viewport      image.Rectangle
 	window        *glfw.Window
-	framebuffer   *graphics.Framebuffer
+	framebuffer   *Framebuffer
 	inputEvents   []interface{}
 	mousePosition image.Point
 	deltaTime     float64
@@ -90,16 +87,16 @@ type app struct {
 	cursorEntered bool
 }
 
-func (app *app) Scissor(r image.Rectangle) graphics.Scissor {
+func (app *app) Scissor(r image.Rectangle) Scissor {
 	vpsz := app.viewport.Size()
 	scale := vpsz.X / app.resolution.X
 	r.Min = r.Min.Mul(scale)
 	r.Max = r.Max.Mul(scale)
 	r.Min.Y, r.Max.Y = vpsz.Y-r.Max.Y, vpsz.Y-r.Min.Y
-	return graphics.Scissor(r)
+	return Scissor(r)
 }
 
-func (app *app) Framebuffer() *graphics.Framebuffer {
+func (app *app) Framebuffer() *Framebuffer {
 	return app.framebuffer
 }
 
@@ -183,13 +180,13 @@ func (app *app) Begin() {
 
 func (app *app) End() {
 	app.framebuffer.End()
-	screen := graphics.Framebuffer{}
+	screen := Framebuffer{}
 	screen.Begin()
 	gl.Viewport(app.viewport)
 	screen.End()
 	app.framebuffer.BlitTo(&screen,
 		app.framebuffer.Bounds(), app.viewport,
-		gl.COLOR_BUFFER_BIT, graphics.FilterLinear)
+		gl.COLOR_BUFFER_BIT, FilterLinear)
 }
 
 func (app *app) Resolution() image.Point {
@@ -204,9 +201,9 @@ func (app *app) charCallback(_ *glfw.Window, char rune) {
 
 func (app *app) keyCallback(_ *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mod glfw.ModifierKey) {
 	app.inputEvents = append(app.inputEvents, KeyEvent{
-		Key:      input.Key(key),
-		Flags:    makeInputFlags(action, mod),
-		Scancode: scancode,
+		Key:       Key(key),
+		Modifiers: makeInputFlags(action, mod),
+		Scancode:  scancode,
 	})
 }
 
@@ -235,9 +232,9 @@ func (app *app) cursorCallback(_ *glfw.Window, x, y float64) {
 func (app *app) mouseCallback(_ *glfw.Window, button glfw.MouseButton, action glfw.Action, mod glfw.ModifierKey) {
 	if app.cursorEntered {
 		app.inputEvents = append(app.inputEvents, MouseEvent{
-			Button:   input.MouseButton(button),
-			Flags:    makeInputFlags(action, mod),
-			Position: app.mousePosition,
+			Button:    MouseButton(button),
+			Modifiers: makeInputFlags(action, mod),
+			Position:  app.mousePosition,
 		})
 	}
 }
@@ -272,7 +269,7 @@ func Main(opt Options, run func(App) error) error {
 
 		w, h := window.GetFramebufferSize()
 		viewport := logicalViewport(image.Point{w, h}, opt.Resolution)
-		framebuffer, _ := graphics.NewFramebuffer(viewport.Size(), graphics.FilterLinear, true)
+		framebuffer, _ := NewFramebuffer(viewport.Size(), FilterLinear, true)
 
 		a := app{
 			windowScale: w / opt.WindowSize.X,

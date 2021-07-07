@@ -1,12 +1,12 @@
-package graphics
+package pancake
 
 import (
 	"errors"
 	"fmt"
 	"runtime"
 
-	gl "github.com/askeladdk/pancake/graphics/opengl"
 	"github.com/askeladdk/pancake/mathx"
+	gl "github.com/askeladdk/pancake/opengl"
 )
 
 var shaderBinder = newBinder(func(prog uint32) {

@@ -1,40 +1,40 @@
-package graphics
+package pancake
 
 import (
 	"errors"
 	"runtime"
 
-	gl "github.com/askeladdk/pancake/graphics/opengl"
+	gl "github.com/askeladdk/pancake/opengl"
 )
 
 var vbobinder = newBinder(func(id uint32) {
 	gl.BindBuffer(gl.ARRAY_BUFFER, gl.Buffer(id))
 })
 
-type Buffer struct {
+type VertexBuffer struct {
 	format AttribFormat
 	stride int
 	count  int
 	id     gl.Buffer
 }
 
-func (vbo *Buffer) Begin() {
+func (vbo *VertexBuffer) Begin() {
 	vbobinder.bind(uint32(vbo.id))
 }
 
-func (vbo *Buffer) End() {
+func (vbo *VertexBuffer) End() {
 	vbobinder.unbind()
 }
 
-func (vbo *Buffer) Len() int {
+func (vbo *VertexBuffer) Len() int {
 	return vbo.count
 }
 
-func (vbo *Buffer) AttribFormat() AttribFormat {
+func (vbo *VertexBuffer) AttribFormat() AttribFormat {
 	return vbo.format
 }
 
-func (vbo *Buffer) SetData(i, j int, data interface{}) {
+func (vbo *VertexBuffer) SetData(i, j int, data interface{}) {
 	if j > i && i >= 0 && j <= vbo.count {
 		gl.BufferSubData(gl.ARRAY_BUFFER, i*vbo.stride, (j-i)*vbo.stride, gl.Ptr(data))
 	} else {
@@ -42,7 +42,7 @@ func (vbo *Buffer) SetData(i, j int, data interface{}) {
 	}
 }
 
-func (vbo *Buffer) Draw(mode gl.Enum, i, j int) {
+func (vbo *VertexBuffer) Draw(mode gl.Enum, i, j int) {
 	if j > i && i >= 0 && j <= vbo.count {
 		gl.DrawArrays(mode, i, j-i)
 	} else {
@@ -50,19 +50,19 @@ func (vbo *Buffer) Draw(mode gl.Enum, i, j int) {
 	}
 }
 
-func (vbo *Buffer) delete() {
+func (vbo *VertexBuffer) delete() {
 	gl.DeleteBuffer(vbo.id)
 }
 
-func NewBuffer(format AttribFormat, count int, data interface{}) *Buffer {
-	buf := &Buffer{
+func NewVertexBuffer(format AttribFormat, count int, data interface{}) *VertexBuffer {
+	buf := &VertexBuffer{
 		format: format,
 		stride: format.stride(),
 		count:  count,
 		id:     gl.CreateBuffer(),
 	}
 
-	runtime.SetFinalizer(buf, (*Buffer).delete)
+	runtime.SetFinalizer(buf, (*VertexBuffer).delete)
 
 	buf.Begin()
 	defer buf.End()

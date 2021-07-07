@@ -4,12 +4,10 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/askeladdk/pancake/input"
 	"github.com/askeladdk/pancake/mathx"
 
 	"github.com/askeladdk/pancake"
-	"github.com/askeladdk/pancake/graphics"
-	gl "github.com/askeladdk/pancake/graphics/opengl"
+	gl "github.com/askeladdk/pancake/opengl"
 )
 
 var vshader = `
@@ -48,34 +46,33 @@ var triangle = []float64{
 	-0.5, -0.5, 0, 0, 1,
 }
 
-var triangleFormat = graphics.AttribFormat{
-	graphics.Vec2, // x, y
-	graphics.Vec3, // r, g, b
+var triangleFormat = pancake.AttribFormat{
+	pancake.AttribVec2, // x, y
+	pancake.AttribVec3, // r, g, b
 }
 
 func run(app pancake.App) error {
-	var program *graphics.ShaderProgram
+	var program *pancake.ShaderProgram
 	var tn, tl float64
 	var interpolate bool
+	var err error
 
-	if p, err := graphics.NewShaderProgram(vshader, fshader); err != nil {
+	if program, err = pancake.NewShaderProgram(vshader, fshader); err != nil {
 		return err
-	} else {
-		program = p
 	}
 
-	buffer := graphics.NewBuffer(triangleFormat, 3, triangle)
-	vslice := graphics.NewVertexSlice(buffer)
+	buffer := pancake.NewVertexBuffer(triangleFormat, 3, triangle)
+	vslice := pancake.NewVertexArraySlice(buffer)
 
 	return app.Events(func(ev interface{}) error {
 		switch e := ev.(type) {
 		case pancake.QuitEvent:
 			return pancake.ErrQuit
 		case pancake.KeyEvent:
-			if e.Flags.Pressed() {
-				if e.Key == input.KeyEscape {
+			if e.Modifiers.Pressed() {
+				if e.Key == pancake.KeyEscape {
 					return pancake.ErrQuit
-				} else if e.Key == input.KeySpace {
+				} else if e.Key == pancake.KeySpace {
 					interpolate = !interpolate
 				}
 			}

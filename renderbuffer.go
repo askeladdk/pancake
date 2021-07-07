@@ -1,10 +1,10 @@
-package graphics
+package pancake
 
 import (
 	"image"
 	"runtime"
 
-	gl "github.com/askeladdk/pancake/graphics/opengl"
+	gl "github.com/askeladdk/pancake/opengl"
 )
 
 type renderbuffer struct {

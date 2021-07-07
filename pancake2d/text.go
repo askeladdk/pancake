@@ -1,15 +1,14 @@
-package text
+package pancake2d
 
 import (
 	"image/color"
 	"unicode/utf8"
 
-	"github.com/askeladdk/pancake/graphics"
+	"github.com/askeladdk/pancake"
 	"github.com/askeladdk/pancake/mathx"
 )
 
-// Text represents the drawing state of text written in a Font.
-// It implements graphics2d.Batch.
+// Text represents the drawing state of text and implements SpriteBatch.
 type Text struct {
 	// Pos is the base position of the text.
 	Pos mathx.Vec2
@@ -31,13 +30,13 @@ type Text struct {
 	ZOrder float64
 
 	modelview []mathx.Aff3
-	region    []graphics.TextureRegion
-	font      *Font
+	region    []pancake.TextureRegion
+	font      *pancake.Font
 	lastRune  rune
 }
 
 // NewText creates a new Text batch based on a Font.
-func NewText(font *Font) *Text {
+func NewText(font *pancake.Font) *Text {
 	return &Text{
 		TintColor: color.RGBA{255, 255, 255, 255},
 		TabWidth:  font.Glyph(' ').Advance * 4,
@@ -115,12 +114,12 @@ func (t *Text) TintColorAt(i int) color.Color {
 }
 
 // TextureAt implements graphics2d.Batch.
-func (t *Text) TextureAt(_ int) *graphics.Texture {
+func (t *Text) TextureAt(_ int) *pancake.Texture {
 	return t.font.Texture()
 }
 
 // TextureRegionAt implements graphics2d.Batch.
-func (t *Text) TextureRegionAt(i int) graphics.TextureRegion {
+func (t *Text) TextureRegionAt(i int) pancake.TextureRegion {
 	return t.region[i]
 }
 

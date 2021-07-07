@@ -1,23 +1,11 @@
-package text
+package pancake
 
 import (
-	"image"
-	"os"
 	"testing"
 	"unicode"
 
-	"github.com/askeladdk/pancake"
 	"golang.org/x/image/font/basicfont"
 )
-
-func TestMain(m *testing.M) {
-	pancake.Main(pancake.Options{
-		WindowSize: image.Point{320, 200},
-	}, func(_ pancake.App) error {
-		os.Exit(m.Run())
-		return nil
-	})
-}
 
 func Test_rangeTableToRunes(t *testing.T) {
 	expected := []rune(" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\ufffd")
