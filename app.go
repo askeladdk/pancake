@@ -1,6 +1,7 @@
 package pancake
 
 import (
+	"context"
 	"image"
 	"time"
 
@@ -8,15 +9,6 @@ import (
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"golang.design/x/mainthread"
 )
-
-type constError string
-
-func (s constError) Error() string {
-	return string(s)
-}
-
-// ErrQuit signals that the event loop must end.
-var ErrQuit error = constError("quit application")
 
 func makeInputFlags(action glfw.Action, mod glfw.ModifierKey) Modifiers {
 	var flags Modifiers
@@ -80,8 +72,8 @@ type App interface {
 	// SetTitle sets the window title.
 	SetTitle(string)
 
-	// Events handles events.
-	Events(func(interface{}) error) error
+	// Events returns the events channel.
+	Events() <-chan interface{}
 
 	// Begin binds the framebuffer and set the viewport.
 	Begin()
@@ -101,6 +93,7 @@ type app struct {
 	deltaTime     float64
 	frameRate     int
 	cursorEntered bool
+	eventch       chan interface{}
 }
 
 func (app *app) Scissor(r image.Rectangle) Scissor {
@@ -126,7 +119,11 @@ func (app *app) SetTitle(title string) {
 	})
 }
 
-func (app *app) Events(eventh func(interface{}) error) error {
+func (app *app) Events() <-chan interface{} {
+	return app.eventch
+}
+
+func (app *app) loop(ctx context.Context) {
 	// loop regulator variables
 	deltaTime := app.deltaTime
 	accumulator := float64(0)
@@ -136,7 +133,6 @@ func (app *app) Events(eventh func(interface{}) error) error {
 	frameRate := 0
 	ft0 := time.Now()
 
-mainloop:
 	for {
 		t1 := time.Now()
 		accumulator += t1.Sub(t0).Seconds()
@@ -147,24 +143,28 @@ mainloop:
 
 			if app.window.ShouldClose() {
 				app.window.SetShouldClose(false)
-				app.inputEvents = append(app.inputEvents, QuitEvent{})
+				select {
+				case <-ctx.Done():
+					return
+				case app.eventch <- QuitEvent{}:
+				}
 			}
 
 			mainthread.Call(glfw.PollEvents)
 
 			for _, inputEvent := range app.inputEvents {
-				if err := eventh(inputEvent); err == ErrQuit {
-					break mainloop
-				} else if err != nil {
-					return err
+				select {
+				case <-ctx.Done():
+					return
+				case app.eventch <- inputEvent:
 				}
 			}
 			app.inputEvents = app.inputEvents[:0]
 
-			if err := eventh(FrameEvent{deltaTime}); err == ErrQuit {
-				break mainloop
-			} else if err != nil {
-				return err
+			select {
+			case <-ctx.Done():
+				return
+			case app.eventch <- FrameEvent{deltaTime}:
 			}
 
 			// frame counter
@@ -175,18 +175,12 @@ mainloop:
 			}
 		}
 
-		alpha := accumulator / deltaTime
-
-		if err := eventh(DrawEvent{alpha}); err == ErrQuit {
-			break mainloop
-		} else if err != nil {
-			return err
+		select {
+		case <-ctx.Done():
+			return
+		case app.eventch <- DrawEvent{accumulator / deltaTime}:
 		}
-
-		mainthread.Call(app.window.SwapBuffers)
 	}
-
-	return nil
 }
 
 func (app *app) Begin() {
@@ -203,6 +197,7 @@ func (app *app) End() {
 	app.framebuffer.BlitTo(&screen,
 		app.framebuffer.Bounds(), app.viewport,
 		gl.COLOR_BUFFER_BIT, FilterLinear)
+	mainthread.Call(app.window.SwapBuffers)
 }
 
 func (app *app) Resolution() image.Point {
@@ -301,6 +296,7 @@ func Main(opt Options, run func(App) error) error {
 			viewport:    viewport,
 			resolution:  opt.Resolution,
 			framebuffer: framebuffer,
+			eventch:     make(chan interface{}),
 		}
 
 		window.SetKeyCallback(a.keyCallback)
@@ -314,7 +310,12 @@ func Main(opt Options, run func(App) error) error {
 		gl.Enable(gl.BLEND)
 		gl.BlendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
 
-		err = run(&a)
+		ctx, cancel := context.WithCancel(context.Background())
+		go func() {
+			err = run(&a)
+			cancel()
+		}()
+		a.loop(ctx)
 	})
 
 	return err

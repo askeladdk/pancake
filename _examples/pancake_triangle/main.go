@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"image"
 
-	"github.com/askeladdk/pancake/mathx"
-
 	"github.com/askeladdk/pancake"
+	"github.com/askeladdk/pancake/mathx"
 	gl "github.com/askeladdk/pancake/opengl"
 )
 
@@ -64,14 +63,14 @@ func run(app pancake.App) error {
 	buffer := pancake.NewVertexBuffer(triangleFormat, 3, triangle)
 	vslice := pancake.NewVertexArraySlice(buffer)
 
-	return app.Events(func(ev interface{}) error {
-		switch e := ev.(type) {
+	for {
+		switch e := (<-app.Events()).(type) {
 		case pancake.QuitEvent:
-			return pancake.ErrQuit
+			return nil
 		case pancake.KeyEvent:
 			if e.Modifiers.Pressed() {
 				if e.Key == pancake.KeyEscape {
-					return pancake.ErrQuit
+					return nil
 				} else if e.Key == pancake.KeySpace {
 					interpolate = !interpolate
 				}
@@ -101,9 +100,7 @@ func run(app pancake.App) error {
 			program.End()
 			app.End()
 		}
-
-		return nil
-	})
+	}
 }
 
 func main() {

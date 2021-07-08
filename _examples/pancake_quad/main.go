@@ -94,13 +94,13 @@ func run(app pancake.App) error {
 		ebo := pancake.NewIndexBufferUint8(indices)
 		vslice := pancake.NewIndexedVertexArraySlice(ebo, buffer)
 
-		return app.Events(func(ev interface{}) error {
-			switch e := ev.(type) {
+		for {
+			switch e := (<-app.Events()).(type) {
 			case pancake.QuitEvent:
-				return pancake.ErrQuit
+				return nil
 			case pancake.KeyEvent:
 				if e.Modifiers.Pressed() && e.Key == pancake.KeyEscape {
-					return pancake.ErrQuit
+					return nil
 				}
 			case pancake.DrawEvent:
 				app.Begin()
@@ -135,9 +135,7 @@ func run(app pancake.App) error {
 
 				app.End()
 			}
-
-			return nil
-		})
+		}
 	}
 }
 
@@ -149,5 +147,7 @@ func main() {
 		FrameRate:  60,
 	}
 
-	pancake.Main(opt, run)
+	if err := pancake.Main(opt, run); err != nil {
+		panic(err)
+	}
 }
