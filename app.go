@@ -27,8 +27,8 @@ type App interface {
 	// Scissor creates a Scissor that is scaled to the viewport.
 	Scissor(image.Rectangle) Scissor
 
-	// Size reports the size of the viewport.
-	Size() image.Point
+	// Bounds reports the bounds of the viewport.
+	Bounds() image.Rectangle
 
 	// SetTitle sets the window title.
 	SetTitle(string)

@@ -11,12 +11,13 @@ import (
 
 type glfwWindow struct {
 	*glfw.Window
-	inputEvents   []interface{}
-	cursorEntered bool
-	windowScale   int
-	viewport      image.Rectangle
-	resolution    image.Point
-	mousePosition image.Point
+	inputEvents     []interface{}
+	cursorEntered   bool
+	windowScale     int
+	resolutionScale int
+	viewport        image.Rectangle
+	resolution      image.Point
+	mousePosition   image.Point
 }
 
 func newGlfwWindow(opt Options) (*glfwWindow, error) {
@@ -46,6 +47,7 @@ func newGlfwWindow(opt Options) (*glfwWindow, error) {
 	wnd.resolution = opt.Resolution
 	wnd.windowScale = w / opt.WindowSize.X
 	wnd.viewport = logicalViewport(image.Pt(w, h), opt.Resolution)
+	wnd.resolutionScale = wnd.viewport.Size().X / wnd.resolution.X
 
 	wnd.MakeContextCurrent()
 	return &wnd, nil
@@ -56,20 +58,16 @@ func (wnd *glfwWindow) Begin() {
 	gl.ClearColor(0, 0, 0, 0)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 	gl.Viewport(wnd.viewport)
-	Scissor(wnd.viewport).Begin()
 }
 
 func (wnd *glfwWindow) End() {
-	Scissor(wnd.viewport).End()
 	mainthread.Call(wnd.SwapBuffers)
 }
 
 func (wnd *glfwWindow) Scissor(r image.Rectangle) Scissor {
-	vpsz := wnd.viewport.Size()
-	scale := vpsz.X / wnd.resolution.X
-	r.Min = r.Min.Mul(scale)
-	r.Max = r.Max.Mul(scale)
-	r.Min.Y, r.Max.Y = vpsz.Y-r.Max.Y, vpsz.Y-r.Min.Y
+	r.Min = r.Min.Mul(wnd.resolutionScale)
+	r.Max = r.Max.Mul(wnd.resolutionScale)
+	r = r.Add(wnd.viewport.Min)
 	return Scissor(r)
 }
 
@@ -79,8 +77,8 @@ func (wnd *glfwWindow) SetTitle(title string) {
 	})
 }
 
-func (wnd *glfwWindow) Size() image.Point {
-	return wnd.resolution
+func (wnd *glfwWindow) Bounds() image.Rectangle {
+	return image.Rectangle{Max: wnd.resolution}
 }
 
 func (wnd *glfwWindow) InputEvents(ctx context.Context, ch chan<- interface{}) bool {
