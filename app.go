@@ -5,7 +5,6 @@ import (
 	"image"
 	"time"
 
-	gl "github.com/askeladdk/pancake/opengl"
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"golang.design/x/mainthread"
 )
@@ -129,9 +128,6 @@ func Main(opt Options, run func(App) error) error {
 			deltaTime:  1 / float64(opt.FrameRate),
 			eventch:    make(chan interface{}),
 		}
-
-		gl.Enable(gl.BLEND)
-		gl.BlendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		go func() {

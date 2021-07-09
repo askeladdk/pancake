@@ -94,6 +94,9 @@ func run(app pancake.App) error {
 		ebo := pancake.NewIndexBufferUint8(indices)
 		vslice := pancake.NewIndexedVertexArraySlice(ebo, buffer)
 
+		gl.Enable(gl.BLEND)
+		gl.BlendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
+
 		app.Scissor(app.Bounds()).Begin()
 
 		for {
