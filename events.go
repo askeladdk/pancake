@@ -4,7 +4,7 @@ import (
 	"image"
 )
 
-type QuitEvent struct{}
+type CloseEvent struct{}
 
 type CharEvent struct {
 	Char rune

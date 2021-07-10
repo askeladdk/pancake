@@ -87,7 +87,7 @@ func (wnd *glfwWindow) InputEvents(ctx context.Context, ch chan<- interface{}) b
 		select {
 		case <-ctx.Done():
 			return false
-		case ch <- QuitEvent{}:
+		case ch <- CloseEvent{}:
 		}
 	}
 

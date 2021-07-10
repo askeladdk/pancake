@@ -65,7 +65,7 @@ func run(app pancake.App) error {
 
 	for {
 		switch e := (<-app.Events()).(type) {
-		case pancake.QuitEvent:
+		case pancake.CloseEvent:
 			return nil
 		case pancake.KeyEvent:
 			if e.Modifiers.Pressed() {
