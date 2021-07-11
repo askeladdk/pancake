@@ -54,9 +54,6 @@ func newGlfwWindow(opt Options) (*glfwWindow, error) {
 }
 
 func (wnd *glfwWindow) Begin() {
-	gl.Viewport(image.Rectangle{Max: image.Pt(wnd.GetFramebufferSize())})
-	gl.ClearColor(0, 0, 0, 0)
-	gl.Clear(gl.COLOR_BUFFER_BIT)
 	gl.Viewport(wnd.viewport)
 }
 
