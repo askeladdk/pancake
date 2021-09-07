@@ -11,8 +11,8 @@ type Camera struct {
 	// Viewport is the area of the screen where the world will be drawn in screen coordinates.
 	Viewport mathx.Rectangle
 
-	// Bounds is a function that reports the total viewable area in world coordinates.
-	Bounds func() mathx.Rectangle
+	// Bounds is the total viewable area in world coordinates.
+	Bounds mathx.Rectangle
 
 	// Pos is the current top left position in world coordinates.
 	Pos mathx.Vec2
@@ -58,7 +58,7 @@ func (c *Camera) Pan(dt mathx.Vec2) {
 	c.Target = c.Viewport.
 		Sub(c.Viewport.Min).
 		Add(c.Target.Add(dt)).
-		Clamp(c.Bounds()).
+		Clamp(c.Bounds).
 		Min
 }
 
@@ -68,7 +68,7 @@ func (c *Camera) CenterAt(px mathx.Vec2) {
 	c.Target = screen.
 		Add(px).
 		Sub(screen.Size().Mul(.5)).
-		Clamp(c.Bounds()).
+		Clamp(c.Bounds).
 		Min
 }
 

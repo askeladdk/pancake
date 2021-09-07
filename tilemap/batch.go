@@ -3,9 +3,9 @@ package tilemap
 import (
 	"image/color"
 
-	"github.com/askeladdk/pancake/graphics"
-	"github.com/askeladdk/pancake/graphics2d"
+	"github.com/askeladdk/pancake"
 	"github.com/askeladdk/pancake/mathx"
+	"github.com/askeladdk/pancake/pancake2d"
 )
 
 func drawExtents(tileSize mathx.Vec2, viewport mathx.Rectangle) (x0, y0, x1, y1, xofs, yofs int) {
@@ -24,11 +24,11 @@ func drawExtents(tileSize mathx.Vec2, viewport mathx.Rectangle) (x0, y0, x1, y1,
 	y1 = int(vpy1) / tileh
 
 	if -xofs+xedge != 0 {
-		x1 += 1
+		x1++
 	}
 
 	if -yofs+yedge != 0 {
-		y1 += 1
+		y1++
 	}
 
 	return
@@ -36,14 +36,14 @@ func drawExtents(tileSize mathx.Vec2, viewport mathx.Rectangle) (x0, y0, x1, y1,
 
 // Batch draws the viewport of a TileMap. It implements the graphics2d.Batch interface.
 type Batch struct {
-	texture    *graphics.Texture
-	regions    []graphics.TextureRegion
+	texture    *pancake.Texture
+	regions    []pancake.TextureRegion
 	modelviews []mathx.Aff3
 	colors     []color.Color
 }
 
 // Update the batch. Call it whenever panning the camera or when the TileMap changes.
-func (b *Batch) Update(tileMap TileMap, camera *graphics2d.Camera) {
+func (b *Batch) Update(tileMap TileMap, camera *pancake2d.Camera) {
 	tileSet := tileMap.TileSet()
 	b.texture = tileSet.Texture()
 	b.regions = b.regions[:0]
@@ -61,9 +61,9 @@ func (b *Batch) Update(tileMap TileMap, camera *graphics2d.Camera) {
 
 	for y := y0; y < y1; y++ {
 		for x := x0; x < x1; x++ {
-			if tileId := tileMap.TileAt(x, y); tileId != Absent {
+			if tileID := tileMap.TileAt(x, y); tileID != Absent {
 				b.modelviews = append(b.modelviews, scale.Translated(position))
-				b.regions = append(b.regions, tileSet.TileRegion(tileId))
+				b.regions = append(b.regions, tileSet.TileRegion(tileID))
 				b.colors = append(b.colors, tileMap.TintColorAt(x, y))
 			}
 			position[0] += tileSize[0]
@@ -73,37 +73,23 @@ func (b *Batch) Update(tileMap TileMap, camera *graphics2d.Camera) {
 	}
 }
 
-// Len implements graphics2d.Batch.
-func (b *Batch) Len() int {
-	return len(b.regions)
-}
+// Len implements pancake2d.SpriteBatch.
+func (b *Batch) Len() int { return len(b.regions) }
 
-// TextureAt implements graphics2d.Batch.
-func (b *Batch) TextureAt(i int) *graphics.Texture {
-	return b.texture
-}
+// TextureAt implements pancake2d.SpriteBatch.
+func (b *Batch) TextureAt(i int) *pancake.Texture { return b.texture }
 
-// TintColorAt implements graphics2d.Batch.
-func (b *Batch) TintColorAt(i int) color.Color {
-	return b.colors[i]
-}
+// TintColorAt implements pancake2d.SpriteBatch.
+func (b *Batch) TintColorAt(i int) color.Color { return b.colors[i] }
 
-// TextureRegionAt implements graphics2d.Batch.
-func (b *Batch) TextureRegionAt(i int) graphics.TextureRegion {
-	return b.regions[i]
-}
+// TextureRegionAt implements pancake2d.SpriteBatch.
+func (b *Batch) TextureRegionAt(i int) pancake.TextureRegion { return b.regions[i] }
 
-// ModelViewAt implements graphics2d.Batch.
-func (b *Batch) ModelViewAt(i int) mathx.Aff3 {
-	return b.modelviews[i]
-}
+// ModelViewAt implements pancake2d.SpriteBatch.
+func (b *Batch) ModelViewAt(i int) mathx.Aff3 { return b.modelviews[i] }
 
-// OriginAt implements graphics2d.Batch.
-func (b *Batch) OriginAt(i int) mathx.Vec2 {
-	return mathx.Vec2{}
-}
+// OriginAt implements pancake2d.SpriteBatch.
+func (b *Batch) OriginAt(i int) mathx.Vec2 { return mathx.Vec2{} }
 
-// ZOrderAt implements graphic2.Batch.
-func (b *Batch) ZOrderAt(i int) float64 {
-	return 0
-}
+// ZOrderAt implements pancake2d.SpriteBatch.
+func (b *Batch) ZOrderAt(i int) float64 { return 0 }

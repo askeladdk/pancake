@@ -11,15 +11,15 @@ type CharEvent struct {
 }
 
 type KeyEvent struct {
-	Key       Key
-	Modifiers Modifiers
-	Scancode  int
+	Modifiers
+	Key      Key
+	Scancode int
 }
 
 type MouseEvent struct {
-	Button    MouseButton
-	Modifiers Modifiers
-	Position  image.Point
+	Modifiers
+	Button   MouseButton
+	Position image.Point
 }
 
 type MouseMoveEvent struct {

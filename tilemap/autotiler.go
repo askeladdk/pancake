@@ -2,21 +2,20 @@ package tilemap
 
 import "image"
 
-// AutoTiler implements the AutoTile() method.
+// AutoTiler maps a tile neighbour bitset to a TileID.
 type AutoTiler interface {
-	// AutoTile maps a tile neighbour bitset to a TileID.
 	AutoTile(bitset uint8) TileID
 }
 
-var autoTileNeighbours = []image.Point{
-	{1, -1},  // NE
-	{1, 1},   // SE
-	{-1, 1},  // SW
+var neighbours = []image.Point{
+	{+1, -1}, // NE
+	{+1, +1}, // SE
+	{-1, +1}, // SW
 	{-1, -1}, // NW
-	{0, -1},  // N
-	{1, 0},   // E
-	{0, 1},   // S
-	{-1, 0},  // W
+	{+0, -1}, // N
+	{+1, +0}, // E
+	{+0, +1}, // S
+	{-1, +0}, // W
 }
 
 // AutoTile modifies the TileMap by autotiling all tiles inside the given area.
@@ -24,12 +23,12 @@ func AutoTile(tileMap TileMap, cellBounds image.Rectangle) {
 	tileSet := tileMap.TileSet()
 	for y := cellBounds.Min.Y; y < cellBounds.Max.Y; y++ {
 		for x := cellBounds.Min.X; x < cellBounds.Max.X; x++ {
-			if tileId := tileMap.TileAt(x, y); tileId != Absent {
-				if base, autoTiler, ok := tileSet.IsAutoTile(tileId); ok {
+			if id0 := tileMap.TileAt(x, y); id0 != Absent {
+				if base, autoTiler := tileSet.IsAutoTile(id0); autoTiler != nil {
 					var bitset uint8
-					for bit, neighbour := range autoTileNeighbours {
-						nbTileId := tileMap.TileAt(x+neighbour.X, y+neighbour.Y)
-						if nbTileId == Absent || !tileSet.SameAutoTile(tileId, nbTileId) {
+					for bit, neighbour := range neighbours {
+						id1 := tileMap.TileAt(x+neighbour.X, y+neighbour.Y)
+						if id1 == Absent || !tileSet.SameBaseTile(id0, id1) {
 							bitset |= 1 << bit
 						}
 					}
@@ -42,9 +41,7 @@ func AutoTile(tileMap TileMap, cellBounds image.Rectangle) {
 
 type arrayAutoTiler [256]TileID
 
-func (a *arrayAutoTiler) AutoTile(bitset uint8) TileID {
-	return a[bitset]
-}
+func (a *arrayAutoTiler) AutoTile(bitset uint8) TileID { return a[bitset] }
 
 // BlobTiler is an AutoTiler that maps corners and edges to 47 unique tiles.
 var BlobTiler = AutoTiler(&arrayAutoTiler{

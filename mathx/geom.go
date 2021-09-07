@@ -1,6 +1,9 @@
 package mathx
 
-import "math"
+import (
+	"image"
+	"math"
+)
 
 // Rectangle represents an axis-aligned bounding box (AABB)
 // bounded by (x0, y0) -- (x1, y1).
@@ -17,6 +20,14 @@ func Rect(x0, y0, x1, y1 float64) Rectangle {
 		y0, y1 = y1, y0
 	}
 	return Rectangle{Vec2{x0, y0}, Vec2{x1, y1}}
+}
+
+// FromRectangle converts an image.Rectangle to a Rectangle.
+func FromRectangle(p image.Rectangle) Rectangle {
+	return Rectangle{
+		Min: FromPoint(p.Min),
+		Max: FromPoint(p.Max),
+	}
 }
 
 // Elem decomposes r in its individual elements.
